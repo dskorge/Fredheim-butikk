@@ -70,7 +70,9 @@ QR-en inneheld ein URL: `<butikk-adresse>#v=<kode>`. Vanleg mobilkamera opnar d�
 
 **Prototypen brukar ein enkel sjekksum som kven som helst kan rekne ut. Han er ikkje tryggleik.**
 
-## Varelager (plan, ikkje bygd)
+## Varelager
+Prototype: `#lager` (lenke «Lager» i testlinja). Stk-varer med +1/+5/+10/−1, sal trekkjer frå, glasflasker hos kundar, status per kjøtpakke, logg. Lagra i localStorage. Resten under er plan for den ekte versjonen.
+
 Lager og etikettar er same system: ein vektpakke blir til i databasen i det etiketten blir skriven ut.
 
 **Vektvarer (kjøt)** – éin rad per pakke: pakke-ID, produkt, gram, kr, kilopris, pakkedato, best før, parti, Nortura-referanse, status (`lager` → `reservert` → `seld`, eller `uttak`/`svinn`).

@@ -33,7 +33,27 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
 header .logo svg{width:132px;height:auto;display:block}
 header .caps{color:var(--red);padding-bottom:4px}
 main{padding:0 var(--g)}
-#korg,#takk{max-width:560px;margin:0 auto}
+#korg,#takk,#lager{max-width:560px;margin:0 auto}
+#lager{padding:26px 0 60px}
+body[data-vis=lager] #botn,body[data-vis=etikettar] #botn{display:none}
+#lager h1{font-size:2.1rem;margin-top:8px}
+#lager .lead{margin:8px 0 18px}
+.lg-kort{background:var(--lift);border:1px solid var(--rule);padding:16px;margin-bottom:12px}
+.lg-topp{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.lg-topp b{font-family:var(--display);font-size:1.3rem}
+.lg-tal{font-family:var(--display);font-weight:700;font-size:2rem;line-height:1}
+.lg-tal.neg{color:var(--red)}
+.lg-kort small{display:block;color:var(--stone);font-size:.88rem;margin-top:2px}
+.lg-knappar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.lg-knappar button{min-height:48px;border:1.5px solid var(--ink);background:transparent;font-weight:600;font-size:1rem;color:var(--ink)}
+.lg-knappar button.pluss{background:var(--ink);color:var(--lift)}
+#lager h2{font-size:1.4rem;margin:26px 0 10px}
+.lg-tab{width:100%;border-collapse:collapse;font-size:.95rem}
+.lg-tab td,.lg-tab th{padding:9px 4px;border-bottom:1px solid var(--rule);text-align:left}
+.lg-tab th{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);font-weight:600}
+.lg-tab td:not(:first-child),.lg-tab th:not(:first-child){text-align:right}
+#lgLogg{list-style:none;margin:0;padding:0;font-size:.9rem;color:var(--stone)}
+#lgLogg li{padding:6px 0;border-bottom:1px solid var(--rule)}
 
 /* tom korg */
 #tom{padding:34px 0 40px}
@@ -154,7 +174,7 @@ body.skannar{overflow:hidden}
 </style>
 </head>
 <body>
-<div class="test"><span>Testmodus: ingen betaling blir gjennomført.</span><span><button id="opneTest" type="button">Testvarer</button> · <a href="#etikettar" style="color:var(--sand)">Etikettar</a></span></div>
+<div class="test"><span>Testmodus: ingen betaling blir gjennomført.</span><span><button id="opneTest" type="button">Testvarer</button> · <a href="#etikettar" style="color:var(--sand)">Etikettar</a> · <a href="#lager" style="color:var(--sand)">Lager</a></span></div>
 
 <header>
   <a class="logo" id="logo-src" href="#butikk" aria-label="Fredheim gard">__LOGO__</a>
@@ -198,6 +218,17 @@ body.skannar{overflow:hidden}
       </table>
     </div>
     <button class="btn" id="nyHandel" type="button">Ny handel</button>
+  </section>
+
+  <section id="lager" hidden>
+    <p class="caps" style="color:var(--red)">Berre for oss</p>
+    <h1>Lager</h1>
+    <p class="lead">Legg inn egg og mjølk når du set dei i butikken. Sal trekkjer frå av seg sjølv. Testdata blir berre lagra på denne telefonen.</p>
+    <div id="lgStk"></div>
+    <h2>Kjøt (eigen etikett per pakke)</h2>
+    <table class="lg-tab"><thead><tr><th>Vare</th><th>På lager</th><th>Kg</th><th>Seld</th></tr></thead><tbody id="lgVekt"></tbody></table>
+    <h2>Siste endringar</h2>
+    <ul id="lgLogg"></ul>
   </section>
 
   <section id="etikettar" hidden>

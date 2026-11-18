@@ -136,7 +136,7 @@
 
   // ---------- Visning ----------
   function vis(id) {
-    ['#korg', '#takk', '#etikettar'].forEach(function (s) { $(s).hidden = s !== id; });
+    ['#korg', '#takk', '#etikettar', '#lager'].forEach(function (s) { $(s).hidden = s !== id; });
     document.body.dataset.vis = id.slice(1);
     window.scrollTo(0, 0);
   }
@@ -197,7 +197,7 @@
     else if (t.id === 'lukkTest') lukkTest();
     else if (t.id === 'skriv') { try { window.print(); } catch (err) {} }
     else if (t.id === 'nyHandel') { history.replaceState(null, '', base()); vis('#korg'); }
-    else if (t.id === 'nullstill') { korg = []; seld = []; lagreKorg(); lagre('seld2', seld); teikn(); toast('Testdata nullstilt.'); }
+    else if (t.id === 'nullstill') { korg = []; seld = []; lager = { stk: {}, flaskerUte: 0, logg: [] }; lagreKorg(); lagre('seld2', seld); lagreLager(); teikn(); toast('Testdata nullstilt.'); }
   });
   $('#pantDlg').addEventListener('cancel', function (e) { e.preventDefault(); });
   function lukkTest() { var dl = $('#testvarer'); if (dl.open) dl.close(); }
@@ -206,6 +206,7 @@
   function fullfoer() {
     var s = sum(), nr = 'FH-' + Date.now().toString().slice(-6);
     korg.forEach(function (l) { if (l.id) seld.push(l.id); });
+    trekkFraLager(korg);
     $('#ordre').textContent = 'Ordre ' + nr + ' · ' + new Date().toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' });
     $('#kvlinjer').innerHTML = korg.map(function (l) {
       var under = l.pantLinje ? '<small>Ta med flaska neste gong og byt ho mot ei full</small>'
@@ -419,13 +420,64 @@
     }).join('');
   }
 
+
+  // ---------- Lager ----------
+  // Stk-varer (egg, mjølk) blir lagde inn med knappar, utan etikett. Vektpakkar har status per pakke.
+  // Prototype: lagra på telefonen. I den ferdige løysinga ligg dette i databasen saman med betalinga.
+  var lager = hent('lager2', { stk: {}, flaskerUte: 0, logg: [] });
+  var EINING = { egg12: 'kartongar', egg30: 'brett', mjolk: 'flasker' };
+  function lagreLager() { lagre('lager2', lager); }
+  function nar() { return new Date().toLocaleString('nb-NO', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
+  function endreLager(pid, n, kvifor) {
+    lager.stk[pid] = (lager.stk[pid] || 0) + n;
+    lager.logg.unshift(nar() + ' · ' + PROD[pid].namn + ' ' + (n > 0 ? '+' : '') + n + ' (' + kvifor + ')');
+    lager.logg = lager.logg.slice(0, 30);
+    lagreLager();
+  }
+  function trekkFraLager(linjer) {
+    linjer.forEach(function (l) {
+      if (l.hylle) endreLager(l.pid, -(l.n || 1), 'sal');
+      if (l.pantLinje) lager.flaskerUte += (l.n || 1);
+    });
+    lagreLager();
+  }
+  function teiknLager() {
+    $('#lgStk').innerHTML = HYLLE.map(function (pid) {
+      var n = lager.stk[pid] || 0, p = PROD[pid];
+      var ekstra = pid === 'mjolk' ? '<small>Glasflasker hos kundar: ' + lager.flaskerUte + '</small>' : '';
+      return '<div class="lg-kort"><div class="lg-topp"><div><b>' + esc(p.namn) + '</b><small>' + kr(p.pris) + ' · ' + EINING[pid] + ' i butikken</small>' + ekstra + '</div>' +
+        '<span class="lg-tal' + (n < 0 ? ' neg' : '') + '">' + n + '</span></div>' +
+        '<div class="lg-knappar"><button data-lg="' + pid + '" data-n="-1" aria-label="Ta ut éin">−1</button>' +
+        '<button class="pluss" data-lg="' + pid + '" data-n="1">+1</button><button class="pluss" data-lg="' + pid + '" data-n="5">+5</button><button class="pluss" data-lg="' + pid + '" data-n="10">+10</button></div></div>';
+    }).join('');
+    var g = {};
+    PAKKAR.forEach(function (pk) {
+      var r = g[pk.p] || (g[pk.p] = { lager: 0, g: 0, seld: 0 });
+      if (seld.indexOf(pk.id) >= 0) r.seld++; else { r.lager++; r.g += pk.g; }
+    });
+    $('#lgVekt').innerHTML = Object.keys(g).map(function (pid) {
+      var r = g[pid];
+      return '<tr><td>' + esc(PROD[pid].namn) + '</td><td>' + r.lager + '</td><td>' + (r.g ? (r.g / 1000).toFixed(1).replace('.', ',') : '–') + '</td><td>' + r.seld + '</td></tr>';
+    }).join('');
+    $('#lgLogg').innerHTML = lager.logg.length ? lager.logg.slice(0, 10).map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') : '<li>Ingen endringar enno.</li>';
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-lg]'); if (!b) return;
+    var n = +b.dataset.n, pid = b.dataset.lg;
+    endreLager(pid, n, n > 0 ? 'lagt inn' : 'uttak/svinn');
+    teiknLager();
+    toast(esc(PROD[pid].namn) + ': ' + (n > 0 ? '+' : '') + n + ' · no ' + (lager.stk[pid] || 0) + ' ' + EINING[pid]);
+  });
+
   // ---------- Ruting ----------
   function ruting() {
     var h = location.hash;
     if (h.indexOf('#v=') === 0) {
       history.replaceState(null, '', base()); vis('#korg'); leggTil(h); return;
     }
-    if (h === '#etikettar') vis('#etikettar'); else vis('#korg');
+    if (h === '#etikettar') vis('#etikettar');
+    else if (h === '#lager') { teiknLager(); vis('#lager'); }
+    else vis('#korg');
   }
   window.addEventListener('hashchange', ruting);
 
