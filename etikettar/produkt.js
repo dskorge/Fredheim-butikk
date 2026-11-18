@@ -20,5 +20,10 @@ window.FH_PRODUKT = {
     { id: 'deigpakke', namn: 'Kjøtdeigpakke', pris: 1090, tekst: '5 kg kjøtdeig', kverna: true },
     { id: 'helg', namn: 'Helgepakke', pris: 990, tekst: 'ca. 2 kg · biff, entrecôte, ytrefilet' }
   ],
-  mjolk: { id: 'mjolk', namn: 'Heilmelk', pris: 45, dagar: 7 }
+  mjolk: { id: 'mjolk', namn: 'Heilmelk', pris: 45, dagar: 7 },
+  // Egg på brett utan lokk, sel med plakat over eggene (eggplakat.html). Pris MÅ vere lik PROD i src/app.js.
+  egg: [
+    { id: 'egg30', namn: 'Brett med 30 egg', tal: 30, pris: 150 },
+    { id: 'egg12', namn: '12 egg', tal: 12, pris: 65 }
+  ]
 };

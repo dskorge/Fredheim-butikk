@@ -81,6 +81,8 @@
   function sum() { return korg.reduce(function (t, l) { return t + l.kr * (l.n || 1); }, 0); }
     function mva() { return Math.round(sum() * MVA / (100 + MVA)); }
   function antal() { return korg.reduce(function (t, l) { return l.pantLinje ? t : t + (l.n || 1); }, 0); }
+  // Tal på pakkar av same vare (vektvarer ligg som éi linje per pakke)
+  function talAv(pid) { return korg.reduce(function (t, l) { return l.pid === pid && !l.hylle && !l.pantLinje ? t + (l.n || 1) : t; }, 0); }
   function varer(n) { return n + (n === 1 ? ' vare' : ' varer'); }
 
   var toastT;
@@ -110,8 +112,10 @@
       auk(function (x) { return x.hylle && x.pid === v.pid; }, { hylle: true, pid: v.pid, namn: v.namn, kr: v.kr, n: 1 });
     } else {
       if (seld.indexOf(v.id) >= 0) { toast('Denne pakken er alt seld. Ta kontakt med oss.', true); return false; }
-      if (korg.some(function (x) { return x.id === v.id; })) { toast(esc(v.namn) + ' ligg alt i korga.'); return false; }
-      korg.push({ id: v.id, pid: v.pid, namn: v.namn, g: v.g, kg: v.kg, vekt: v.vekt, tekst: v.tekst, kr: v.kr, dato: v.dato, parti: v.parti });
+      var finst = korg.find(function (x) { return x.id === v.id; });
+      if (finst && v.vekt) { toast(esc(v.namn) + ' ' + vekt(v.g) + ' ligg alt i korga. Har du fleire pakkar, skann kvar av dei – vekta er ulik.'); return false; }
+      if (finst) finst.n = (finst.n || 1) + 1; // fastpris (kjøtkasse): same kode = ein til
+      else korg.push({ id: v.id, pid: v.pid, namn: v.namn, g: v.g, kg: v.kg, vekt: v.vekt, tekst: v.tekst, kr: v.kr, dato: v.dato, parti: v.parti, n: 1 });
     }
     lagtTil(v.namn + (v.vekt ? ' ' + vekt(v.g) : ''));
     return true;
@@ -140,7 +144,8 @@
   function linjeMeta(l) {
     if (l.pantLinje) return kr(l.kr) + ' per flaske · neste gong byter du tom mot full';
     if (l.hylle) return kr(l.kr) + ' per stk';
-    if (l.vekt) return vekt(l.g) + (l.kg != null ? ' · ' + krDes(l.kg) + '/kg' : '');
+    if (l.vekt) return vekt(l.g) + (l.kg != null ? ' · ' + krDes(l.kg) + '/kg' : '') + (talAv(l.pid) > 1 ? ' · éin av ' + talAv(l.pid) + ' pakkar' : '');
+    if (l.id && (l.n || 1) > 1) return esc(l.tekst || '') + ' · ' + kr(l.kr) + ' per stk';
     return esc(l.tekst || '');
   }
   function teikn() {
@@ -149,9 +154,10 @@
     $('#botn').hidden = tom;
     if (tom) return;
     $('#linjer').innerHTML = korg.map(function (l, i) {
-      var ctrl = (l.hylle || l.pantLinje)
-        ? '<div class="tal"><button data-minus="' + i + '" aria-label="Ein færre">−</button><span>' + l.n + '</span><button data-pluss="' + i + '" aria-label="Ein til">+</button></div>'
-        : '<button class="fjern" data-fjern="' + i + '">Fjern</button>';
+      // Alle varer har − og +. Vektvarer: + opnar kameraet (kvar pakke har si eiga vekt og eigen kode).
+      var n = l.n || 1;
+      var ctrl = '<div class="tal"><button data-minus="' + i + '" aria-label="' + (n === 1 ? 'Fjern' : 'Ein færre') + '">−</button><span>' + n + '</span>' +
+        '<button data-pluss="' + i + '" aria-label="' + (l.vekt ? 'Skann ein pakke til' : 'Ein til') + '">+</button></div>';
       return '<li' + (l.pantLinje ? ' class="pant"' : '') + '><div><b>' + esc(l.namn) + '</b><small>' + linjeMeta(l) + '</small>' + ctrl + '</div><span class="pris">' + kr(l.kr * (l.n || 1)) + '</span></li>';
     }).join('');
     var s = sum();
@@ -165,10 +171,16 @@
     var t = e.target.closest('button,a'); if (!t) return;
     var d = t.dataset;
     if (d.fjern != null) { korg.splice(+d.fjern, 1); lagreKorg(); teikn(); }
-    else if (d.pluss != null) { var lp = korg[+d.pluss]; if (lp.pid === 'mjolk') { leggTil(hylleKode('mjolk')); } else { lp.n++; lagreKorg(); teikn(); } }
+    else if (d.pluss != null) {
+      var lp = korg[+d.pluss];
+      if (lp.pid === 'mjolk') leggTil(hylleKode('mjolk'));
+      else if (lp.vekt) { opneSkannar(); toast('Skann neste pakke ' + esc(lp.namn.toLowerCase()) + '. Kvar pakke har si eiga vekt og pris.'); }
+      else { lp.n = (lp.n || 1) + 1; lagreKorg(); teikn(); }
+    }
     else if (d.minus != null) {
       var l = korg[+d.minus];
-      if (--l.n <= 0) korg.splice(+d.minus, 1);
+      l.n = (l.n || 1) - 1;
+      if (l.n <= 0) korg.splice(+d.minus, 1);
       if (l.pid === 'mjolk') { var pl = korg.find(function (x) { return x.pantLinje; }); var mj = l.n > 0 ? l.n : 0; if (pl && pl.n > mj) pantLinje(mj - pl.n); }
       lagreKorg(); teikn();
     }
@@ -198,7 +210,7 @@
       var under = l.pantLinje ? '<small>Ta med flaska neste gong og byt ho mot ei full</small>'
         : l.vekt ? '<small>' + vekt(l.g) + ' · parti ' + esc(l.parti) + '</small>'
         : l.id ? '<small>Parti ' + esc(l.parti) + '</small>' : '';
-      return '<tr><td>' + esc(l.namn) + ((l.hylle || l.pantLinje) ? ' × ' + l.n : '') + under + '</td><td>' + kr(l.kr * (l.n || 1)) + '</td></tr>';
+      return '<tr><td>' + esc(l.namn) + ((l.n || 1) > 1 || l.hylle || l.pantLinje ? ' × ' + (l.n || 1) : '') + under + '</td><td>' + kr(l.kr * (l.n || 1)) + '</td></tr>';
     }).join('');
     $('#kvsum').textContent = kr(s);
     $('#kvmva').textContent = kr(mva());

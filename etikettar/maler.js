@@ -34,14 +34,17 @@
     return w + (sperring || 0) * storleik * Math.max(0, tekst.length - 1);
   }
 
-  // Tekst: o = { s: storleik mm, d: true (Fraunces), v: vekt, f: farge, a: 'end'|'middle', sp: sperring em, maks: mm }
+  // Tekst: o = { s: storleik mm, d: true (Fraunces), v: vekt, f: farge, a: 'end'|'middle', sp: sperring em, maks: mm,
+  //            min: minste storleik mm ved for lang tekst (deretter blir teikna pressa saman, x-høgda blir ståande) }
+  // Instrument Sans har x-høgd ≈ 0,5 × storleik, så 2,4 mm gir ≈ 1,2 mm x-høgd (krav for obligatorisk informasjon).
+  var MIN = 2.4;
   function tekst(x, y, t, o) {
     o = o || {};
     var fam = o.d ? SER : SAN, s = o.s || 2.5, v = o.v || 400, sp = o.sp || 0, ekstra = '';
     if (o.maks) {
       var w = breidd(t, s, fam, v, sp);
       if (w > o.maks) {
-        var ny = Math.max(s * 0.72, s * o.maks / w);
+        var ny = Math.max(o.min || s * 0.72, s * o.maks / w);
         if (breidd(t, ny, fam, v, sp) > o.maks) ekstra = ' textLength="' + f(o.maks) + '" lengthAdjust="spacingAndGlyphs"';
         s = ny;
       }
@@ -102,37 +105,60 @@
   function krDes(n) { var t = (Math.round(n * 100) / 100).toFixed(2).split('.'); return t[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ',' + t[1] + ' kr'; }
   function vekt(g) { return (g / 1000).toFixed(3).replace('.', ',') + ' kg'; }
 
-  // Felles linjer om opphav og oppbevaring for storfe
-  function opphavLinjer(d) {
-    var l = [];
-    l.push(d.fryst ? 'Oppbevarast fryst ved −18 °C. Tin i kjøleskap.' : 'Oppbevarast ved 0–4 °C.');
-    l.push('Opphav: Noreg' + (d.ref ? ' · Ref.nr. ' + d.ref : ''));
-    if (d.kverna) l.push('Slakta: Noreg' + (d.slakteri ? ' (' + d.slakteri + ')' : '') + ' · Kverna: Noreg');
-    else {
-      l.push('Slakta: Noreg' + (d.slakteri ? ' (' + d.slakteri + ')' : ''));
-      l.push('Skore: Noreg' + (d.skjering ? ' (' + d.skjering + ')' : ''));
-    }
+  // Felles linjer om opphav for storfe (forordning 1760/2000 og 1825/2000)
+  function opphavLinjer(d, samla) {
+    var l = ['Opphav: Noreg' + (d.ref ? ' · Ref.nr. ' + d.ref : '')];
+    var sl = 'Slakta i: Noreg' + (d.slakteri ? ' (' + d.slakteri + ')' : '');
+    var sk = d.kverna ? 'Kverna i: Noreg' : 'Skore i: Noreg' + (d.skjering ? ' (' + d.skjering + ')' : '');
+    if (samla) l.push(sl + ' · ' + sk); else { l.push(sl); l.push(sk); }
     return l;
   }
-  function datoLinje(d) {
-    if (d.fryst) return [['Fryst den\u00a0', datoTekst(d.fryst)], ['\u2003Best før\u00a0', datoTekst(d.bestFor)]];
-    return [['Pakka\u00a0', datoTekst(d.pakka)], ['\u2003Best før\u00a0', datoTekst(d.bestFor)]];
+  function dagar(a, b) { return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5); }
+  var SEP = ' · ';
+  // Datoar: slakta, mørning, fryst eller fersk, best før / siste forbruksdag, og oppbevaring.
+  // delt = éin dato per linje (kjøtkasse), elles to datoar på linja (kjøt).
+  // d.holdbar: 'bf' (Best før) eller 'sf' (Siste forbruksdag). Fryst vare får alltid «Best før».
+  function datoBlokk(d, delt) {
+    var rader = [], ref = d.fryst || d.pakka, l1 = [];
+    var mornaTil = !d.fryst && d.morna && ref && d.morna > ref;
+    if (d.slakta) l1.push(['Slakta ', datoTekst(d.slakta)]);
+    if (mornaTil) l1.push([(l1.length ? SEP : '') + 'Mørna til ', datoTekst(d.morna)]);
+    else if (d.slakta && ref && dagar(d.slakta, ref) > 0) l1.push([SEP + 'Mørna ', dagar(d.slakta, ref) + ' døgn']);
+    if (l1.length) rader.push({ deler: l1 });
+    var hold = d.fryst || d.holdbar !== 'sf' ? 'Best før ' : 'Siste forbruksdag ';
+    if (d.fryst) {
+      if (delt) { rader.push({ deler: [['Fryst den ', datoTekst(d.fryst)]] }); rader.push({ deler: [[hold, datoTekst(d.bestFor)]] }); }
+      else rader.push({ deler: [['Fryst den ', datoTekst(d.fryst)], [SEP + hold, datoTekst(d.bestFor)]] });
+      rader.push({ t: 'Oppbevarast fryst ved −18 °C. Tin i kjøleskap.' });
+    } else {
+      rader.push({ deler: [[hold, datoTekst(d.bestFor)]] });
+      rader.push({ t: mornaTil ? 'Oppbevarast ved 0–4 °C. Frys etter mørninga.' : 'Oppbevarast ved 0–4 °C. Kan frysast før datoen.' });
+    }
+    return rader;
   }
-  function blanda(x, y, deler, s, farge) {
-    // «Fryst den» normal + dato halvfeit på same linje
+  function blanda(x, y, deler, s, farge, maks) {
+    // «Fryst den» normal + dato halvfeit på same linje. Krympar ned til MIN og pressar deretter.
+    var w = 0; deler.forEach(function (p) { w += breidd(p[0], s, SAN, 400) + breidd(p[1], s, SAN, 600); });
+    var k = 1;
+    if (maks && w > maks) { var ny = Math.max(MIN, s * maks / w); k = (maks / (w * ny / s)); s = ny; if (k > 1) k = 1; }
     var ut = '', cx = x;
     deler.forEach(function (p) {
-      ut += tekst(cx, y, p[0], { s: s, v: 400, f: farge }); cx += breidd(p[0], s, SAN, 400);
-      ut += tekst(cx, y, p[1], { s: s, v: 600, f: farge }); cx += breidd(p[1], s, SAN, 600);
+      var w0 = breidd(p[0], s, SAN, 400) * k, w1 = breidd(p[1], s, SAN, 600) * k;
+      ut += tekst(cx, y, p[0], { s: s, v: 400, f: farge }).replace('<text ', k < 1 ? '<text textLength="' + f(w0) + '" lengthAdjust="spacingAndGlyphs" ' : '<text '); cx += w0;
+      ut += tekst(cx, y, p[1], { s: s, v: 600, f: farge }).replace('<text ', k < 1 ? '<text textLength="' + f(w1) + '" lengthAdjust="spacingAndGlyphs" ' : '<text '); cx += w1;
     });
     return ut;
   }
+  function rad(x, y, r, s, maks) {
+    return r.deler ? blanda(x, y, r.deler, s, '#000', maks) : tekst(x, y, r.t, { s: s, maks: maks, min: MIN });
+  }
 
-  // ---------- Kjøt, 100 × 70 mm ----------
-  // d: { namn, g, kgPris, kr, fryst, bestFor, pakka, ref, slakteri, skjering, kverna, kode }
+  // ---------- Kjøt, 100 × 70 mm (termorull) · 105 × 74 / 99,1 × 67,7 mm (A4-ark) ----------
+  // d: { namn, g, kgPris, kr, slakta, morna, pakka, fryst, bestFor, holdbar, ref, slakteri, skjering, kverna, kode }
+  // o: { modus, w, h, utfall, fontCss }. Bandet og fjellet går alltid heilt ut til kanten (og ut i utfallet).
   function kjot(d, o) {
-    o = o || {}; var P = palett(o.modus || 'blank'), W = 100, H = 70, s = '';
-    var bandH = 16.5, fjW = 60;
+    o = o || {}; var P = palett(o.modus || 'blank'), W = o.w || 100, H = o.h || 70, R = W - 100, s = '';
+    var bandH = 16.5, fjW = 60, qy = 40.4 + (H - 70) * 0.5, maks = 64 + R;
     if (P.vis.pre) {
       if (o.modus !== 'blank') s += rekt(-3, -3, W + 6, H + 6, P.botn);
       s += rekt(-3, -3, W + 6, bandH + 3, P.band);
@@ -143,56 +169,58 @@
       s += tekst(4, 35.3, 'Å BETALE', { v: 600, s: 1.9, sp: 0.14, f: P.tekst });
       s += tekst(29, 35.3, 'NETTOVEKT', { v: 600, s: 1.9, sp: 0.14, f: P.tekst });
       s += tekst(46, 35.3, 'KILOPRIS', { v: 600, s: 1.9, sp: 0.14, f: P.tekst });
-      s += linje(4, 44.4, 66, 44.4, 0.3, P.aksent);
-      s += tekst(96.4, 37.4, 'SKANN FOR Å KJØPE', { v: 600, s: 1.8, sp: 0.12, a: 'end', f: P.tekst });
-      s += tekst(4, 67.4, ADR.namn + ' · ' + ADR.veg + ' · ' + ADR.post, { s: 2.35, f: P.tekst, maks: 62 });
+      s += linje(4, 44.4, 66 + R, 44.4, 0.3, P.aksent);
+      s += tekst(W - 3.6, qy - 3.0, 'SKANN FOR Å KJØPE', { v: 600, s: 1.8, sp: 0.12, a: 'end', f: P.tekst });
+      s += tekst(4, H - 2.6, ADR.namn + ' · ' + ADR.veg + ' · ' + ADR.post, { s: 2.4, f: P.tekst, maks: maks - 1, min: MIN });
     }
     var info = null;
     if (P.vis.v) {
-      s += tekst(4, 30.2, d.namn, { d: true, v: 600, s: 7.8, maks: 92 });
+      s += tekst(4, 30.2, d.namn, { d: true, v: 600, s: 7.8, maks: W - 8 });
       s += tekst(4, 41.8, kr(d.kr), { d: true, v: 600, s: 6.0, maks: 23.5 });
       s += tekst(29, 41.4, vekt(d.g), { v: 600, s: 3.1, maks: 16 });
-      s += tekst(46, 41.4, krDes(d.kgPris) + '/kg', { s: 2.8, maks: 21 });
-      s += blanda(4, 49.6, datoLinje(d), 2.75, '#000');
-      var l = opphavLinjer(d), y = 54.4;
-      l.forEach(function (t) { s += tekst(4, y, t, { s: 2.5, maks: 63 }); y += 3.25; });
-      var q = qr(d.kode, [560, 323, 214], 5); s += q.svg; info = q.info;
+      s += tekst(46, 41.4, krDes(d.kgPris) + '/kg', { s: 2.8, maks: 20 + R });
+      var rader = datoBlokk(d, false).concat(opphavLinjer(d, true).map(function (t) { return { t: t }; }));
+      var siste = H - 2.6, steg = Math.min(4.0, (siste - 48.9) / rader.length), y = Math.max(48.9, siste - rader.length * steg);
+      rader.forEach(function (r) { s += rad(4, y, r, r.deler ? 2.6 : 2.45, maks); y += steg; });
+      var q = qr(d.kode, [Math.round((W - 30) * DPMM), Math.round(qy * DPMM), 214], 5); s += q.svg; info = q.info;
     }
     return { w: W, h: H, svg: ramme(W, H, s, o), qr: info };
   }
 
-  // ---------- Kjøtkasse, 100 × 150 mm ----------
+  // ---------- Kjøtkasse, 100 × 150 mm (termorull) · 105 × 148 / 99,1 × 139 mm (A4-ark) ----------
   // d: som kjot + { tekst, innhald: [..] }
   function kasse(d, o) {
-    o = o || {}; var P = palett(o.modus || 'blank'), W = 100, H = 150, s = '';
-    var bandH = 30, fjW = 100;
+    o = o || {}; var P = palett(o.modus || 'blank'), W = o.w || 100, H = o.h || 150, R = W - 100, dH = H - 150, s = '';
+    var bandH = 30, maks = 57 + R;
     if (P.vis.pre) {
       if (o.modus !== 'blank') s += rekt(-3, -3, W + 6, H + 6, P.botn);
       s += rekt(-3, -3, W + 6, bandH + 3, P.band);
-      s += fjell(0, bandH - fjellH(fjW), fjW + 0.2, P.fjell) + fjellUtfall(0, bandH - fjellH(fjW), fjW + 0.2, P.fjell, o.utfall);
+      s += fjell(0, bandH - fjellH(W + 0.2), W + 0.2, P.fjell) + fjellUtfall(0, bandH - fjellH(W + 0.2), W + 0.2, P.fjell, o.utfall);
       s += tekst(4, 7.4, 'FREDHEIM GARD · EIDSÅ', { v: 600, s: 2.2, sp: 0.24, f: P.bandtekst });
       s += tekst(4, 38.6, 'KJØTKASSE · STORFE FRÅ GARDEN', { v: 600, s: 2.2, sp: 0.18, f: P.tekst });
-      s += tekst(4, 92.4, 'Å BETALE', { v: 600, s: 2.1, sp: 0.14, f: P.tekst });
-      s += tekst(36, 92.4, 'NETTOVEKT', { v: 600, s: 2.1, sp: 0.14, f: P.tekst });
-      s += tekst(62, 92.4, 'KILOPRIS', { v: 600, s: 2.1, sp: 0.14, f: P.tekst });
-      s += linje(4, 104.6, 96, 104.6, 0.3, P.aksent);
-      s += tekst(96.2, 111.6, 'SKANN FOR Å KJØPE', { v: 600, s: 2.0, sp: 0.12, a: 'end', f: P.tekst });
-      s += tekst(4, 141.2, ADR.namn, { s: 2.6, v: 600, f: P.tekst });
-      s += tekst(4, 145.0, ADR.veg + ', ' + ADR.post, { s: 2.6, f: P.tekst });
+      s += tekst(4, 92.4 + dH, 'Å BETALE', { v: 600, s: 2.1, sp: 0.14, f: P.tekst });
+      s += tekst(36, 92.4 + dH, 'NETTOVEKT', { v: 600, s: 2.1, sp: 0.14, f: P.tekst });
+      s += tekst(62, 92.4 + dH, 'KILOPRIS', { v: 600, s: 2.1, sp: 0.14, f: P.tekst });
+      s += linje(4, 104.6 + dH, 96 + R, 104.6 + dH, 0.3, P.aksent);
+      s += tekst(96.2 + R, 111.6 + dH, 'SKANN FOR Å KJØPE', { v: 600, s: 2.0, sp: 0.12, a: 'end', f: P.tekst });
+      s += tekst(4, H - 8.8, ADR.namn, { s: 2.6, v: 600, f: P.tekst });
+      s += tekst(4, H - 5.0, ADR.veg + ', ' + ADR.post, { s: 2.6, f: P.tekst });
     }
     var info = null;
     if (P.vis.v) {
-      s += tekst(4, 48.5, d.namn, { d: true, v: 600, s: 9.5, maks: 92 });
-      if (d.tekst) s += tekst(4, 54.8, d.tekst, { s: 3.0, maks: 92 });
-      var inn = (d.innhald || []).slice(0, 7), y = 61.6;
-      if (inn.length) { s += tekst(4, y, 'Innhald:', { s: 2.8, v: 600 }); y += 3.8; inn.forEach(function (t) { s += tekst(4, y, '– ' + t, { s: 2.8, maks: 90 }); y += 3.5; }); }
-      s += tekst(4, 100.6, kr(d.kr), { d: true, v: 600, s: 7.4, maks: 30 });
-      s += tekst(36, 100.0, vekt(d.g), { v: 600, s: 3.6, maks: 24 });
-      s += tekst(62, 100.0, krDes(d.kgPris) + '/kg', { s: 3.2, maks: 34 });
-      s += blanda(4, 111.6, datoLinje(d), 2.9, '#000');
-      var l = opphavLinjer(d); y = 117.6;
-      l.forEach(function (t) { s += tekst(4, y, t, { s: 2.6, maks: 56 }); y += 3.6; });
-      var q = qr(d.kode, [512, 912, 256], 6); s += q.svg; info = q.info;
+      s += tekst(4, 48.5, d.namn, { d: true, v: 600, s: 9.5, maks: W - 8 });
+      if (d.tekst) s += tekst(4, 54.8, d.tekst, { s: 3.0, maks: W - 8 });
+      var plass = Math.floor((88 + dH - 65.4) / 3.5) + 1;
+      var inn = (d.innhald || []).slice(0, plass), y = 61.6;
+      if (inn.length) { s += tekst(4, y, 'Innhald:', { s: 2.8, v: 600 }); y += 3.8; inn.forEach(function (t) { s += tekst(4, y, '– ' + t, { s: 2.8, maks: W - 10 }); y += 3.5; }); }
+      s += tekst(4, 100.6 + dH, kr(d.kr), { d: true, v: 600, s: 7.4, maks: 30 });
+      s += tekst(36, 100.0 + dH, vekt(d.g), { v: 600, s: 3.6, maks: 24 });
+      s += tekst(62, 100.0 + dH, krDes(d.kgPris) + '/kg', { s: 3.2, maks: 34 + R });
+      var rader = datoBlokk(d, true).concat(opphavLinjer(d, false).map(function (t) { return { t: t }; }));
+      y = 111.6 + dH;
+      var steg = Math.min(3.8, (H - 8.8 - 3.0 - y) / (rader.length - 1));
+      rader.forEach(function (r) { s += rad(4, y, r, r.deler ? 2.9 : 2.6, maks); y += steg; });
+      var q = qr(d.kode, [Math.round((64 + R) * DPMM), Math.round((114 + dH) * DPMM), 256], 6); s += q.svg; info = q.info;
     }
     return { w: W, h: H, svg: ramme(W, H, s, o), qr: info };
   }
@@ -312,5 +340,7 @@
   function ddmmaa(iso) { var d = String(iso).split('-'); return d[2] + d[1] + d[0].slice(2); }
 
   window.FH_ETIKETT = { kjot: kjot, kasse: kasse, mjolk: mjolk, egg: egg, teikn: teikn, zpl: zpl, lastFontCss: lastFontCss,
-    pakkeKode: pakkeKode, hylleKode: hylleKode, ddmmaa: ddmmaa, DPMM: DPMM, FARGE: FARGE, kr: kr, krDes: krDes, vekt: vekt };
+    pakkeKode: pakkeKode, hylleKode: hylleKode, ddmmaa: ddmmaa, DPMM: DPMM, FARGE: FARGE, kr: kr, krDes: krDes, vekt: vekt,
+    // Byggeklossar for plakatar (eggplakat.html)
+    del: { tekst: tekst, fjell: fjell, fjellH: fjellH, rekt: rekt, linje: linje, qr: qr, blanda: blanda, datoTekst: datoTekst, ADR: ADR } };
 })();

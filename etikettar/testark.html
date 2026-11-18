@@ -39,14 +39,14 @@ h2 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; margin: 
   var E = window.FH_ETIKETT;
   var base = new URL('../', location.href).href;
   var qs = new URLSearchParams(location.search); if (qs.get('base')) base = qs.get('base');
-  var parti = { ref: '2611-7', slakteri: 'NO [slakteri]', skjering: 'NO [skjering]', fryst: '2026-11-18', bestFor: '2027-11-18', partiKode: 'B2611' };
+  var parti = { slakta: '2026-11-02', ref: '2611-7', slakteri: 'NO [slakteri]', skjering: 'NO [skjering]', fryst: '2026-11-18', bestFor: '2027-11-18', partiKode: 'B2611' };
   function kjotData(id, produkt, namn, g, kgPris) {
     var krTot = Math.round(kgPris * g / 1000);
     return Object.assign({}, parti, { namn: namn, g: g, kgPris: kgPris, kr: krTot,
       kode: E.pakkeKode(base, { id: id, produkt: produkt, g: g, kr: krTot, dato: E.ddmmaa(parti.fryst), parti: parti.partiKode }) });
   }
   var morbrad = kjotData('P9001', 'morbrad', 'Mørbrad', 1035, 549);
-  var deig = Object.assign(kjotData('P9002', 'deig', 'Kjøtdeig', 512, 219), { kverna: true });
+  var deig = Object.assign(kjotData('P9002', 'deig', 'Kjøtdeig', 512, 219), { kverna: true, fryst: '', pakka: '2026-11-16', bestFor: '2026-11-20', holdbar: 'sf' }); // fersk
   var kasseG = 10240, kasseKr = 2890;
   var kasse = Object.assign({}, parti, { namn: 'Familiekasse', tekst: 'ca. 10 kg blanda stykningsdelar', g: kasseG, kr: kasseKr, kgPris: kasseKr * 1000 / kasseG,
     innhald: ['Entrecôte og ytrefilet', 'Rundstek og bogstek', 'Grytekjøt', 'Kjøtdeig, 4 × 500 g'],

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eggplakat · Fredheim gard</title>
+<style id="sidestil">@page { size: A4 portrait; margin: 0; }</style>
+<style>
+/* Plakat over eggene. Egga står på brett utan lokk og har ingen etikett. Éin QR per vare (hyllekode F1.H.<vare>). */
+:root { --brun: #5C4433; --papir: #F3ECDB; --sand: #CDB89C; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--papir); color: #2b1f17; font-family: 'Instrument Sans', Arial, sans-serif; }
+.panel { max-width: 900px; margin: 0 auto; padding: 16px; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
+.panel h1 { flex-basis: 100%; font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 26px; margin: 0; }
+.panel p { flex-basis: 100%; margin: 0; font-size: 14px; max-width: 70ch; }
+label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; }
+label.boks { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+input, select { font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid #b9ad9a; background: #fff; min-height: 44px; }
+input[type=checkbox] { min-height: 0; width: 22px; height: 22px; }
+button { min-height: 46px; padding: 10px 18px; border: 2px solid var(--brun); background: var(--brun); color: var(--papir); font: inherit; font-weight: 600; cursor: pointer; }
+#plakat { margin: 0 auto 24px; width: max-content; box-shadow: 0 1px 6px rgba(0,0,0,.15); background: #fff; line-height: 0; }
+#plakat svg { display: block; }
+@media screen and (max-width: 900px) { #plakat svg { width: 92vw !important; height: auto !important; } }
+@media print { body { background: #fff; } .panel { display: none; } #plakat { margin: 0; box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="panel">
+  <h1>Eggplakat</h1>
+  <p>Heng plakaten over eggene. Kunden skannar koden for det han tek, éin gong per brett, og kan trykkje + i handlekorga for fleire.
+    Prisane kjem frå <code>produkt.js</code> og er dei same som i kassa. Skriv ut i 100 %. Laminer plakaten, så kan best før-datoen skrivast på med tusj.</p>
+  <label>Storleik<select id="format"><option value="a4">A4</option><option value="a3">A3</option></select></label>
+  <span id="varer"></span>
+  <label>Best før (tom = skriv for hand)<input id="best" type="date"></label>
+  <button type="button" onclick="window.print()">Skriv ut</button>
+</div>
+<div id="plakat"></div>
+<script src="../src/qr.min.js"></script>
+<script src="fjell.js"></script>
+<script src="maler.js"></script>
+<script src="produkt.js"></script>
+<script>
+(function () {
+  'use strict';
+  var E = window.FH_ETIKETT, D = E.del, F = E.FARGE, $ = function (s) { return document.querySelector(s); };
+  var base = 'https://dskorge.github.io/Fredheim-butikk/';
+  var q = new URLSearchParams(location.search); if (q.get('base')) base = q.get('base');
+  if (q.get('format')) $('#format').value = q.get('format');
+  if (q.get('best')) $('#best').value = q.get('best');
+  var EGG = window.FH_PRODUKT.egg, valt = (q.get('varer') || EGG.map(function (e) { return e.id; }).join(',')).split(',');
+  $('#varer').innerHTML = EGG.map(function (e) {
+    return '<label class="boks"><input type="checkbox" value="' + e.id + '"' + (valt.indexOf(e.id) >= 0 ? ' checked' : '') + '>' + e.namn + ' (' + E.kr(e.pris) + ')</label>';
+  }).join('');
+
+  // Plakaten er teikna i 210 × 297 mm og skalert opp til A3 ved behov.
+  function plakat() {
+    var W = 210, H = 297, b = F.fjellbrun, s = '';
+    var varer = EGG.filter(function (e) { return document.querySelector('#varer input[value="' + e.id + '"]').checked; });
+    s += D.rekt(0, 0, W, H, '#fff');
+    s += D.rekt(0, 0, W, 58, b);
+    s += D.fjell(0, 58 - D.fjellH(W + 0.4), W + 0.4, F.ramjolk);
+    s += D.tekst(14, 16, 'FREDHEIM GARD · EIDSÅ', { v: 600, s: 5, sp: 0.24, f: F.ramjolk });
+    s += D.tekst(14, 91, 'Egg', { d: true, v: 600, s: 40, f: b });
+    s += D.tekst(14, 112, 'frå eigne høner', { d: true, v: 400, s: 8, f: b });
+    s += D.linje(14, 119.5, W - 14, 119.5, 0.5, F.raud);
+    var y0 = varer.length === 1 ? 140 : 126, steg = 60;
+    varer.forEach(function (e, i) {
+      var y = y0 + i * steg;
+      s += D.tekst(14, y + 12, e.namn, { d: true, v: 600, s: 9.5, f: b, maks: 120 });
+      s += D.tekst(14, y + 33, E.kr(e.pris), { d: true, v: 600, s: 19, f: '#000' });
+      s += D.tekst(14, y + 43, E.krDes(e.pris / e.tal) + ' per egg', { s: 5.2, f: b });
+      // QR: 1,25 mm modular (10 punkt à 1/8 mm) i ein boks på 50 mm. Les godt på 40–60 cm.
+      var qr = D.qr(E.hylleKode(base, e.id), [146 * 8, y * 8, 400], 10, '#000');
+      s += qr.svg;
+      s += D.tekst(171, y + 54.5, 'SKANN FOR Å KJØPE', { v: 600, s: 3.2, sp: 0.12, a: 'middle', f: b });
+    });
+    var yi = 252;
+    s += D.linje(14, yi - 5, W - 14, yi - 5, 0.3, F.sand || '#CDB89C');
+    s += D.tekst(14, yi + 4, 'Skann éin gong per brett. Tek du fleire, trykk + i handlekorga.', { s: 4.4, f: '#000', maks: W - 28 });
+    s += D.tekst(14, yi + 11.5, 'Usorterte egg i ulik storleik og farge. Oppbevarast kjøleg.', { s: 4.4, f: '#000', maks: W - 28 });
+    s += D.tekst(14, yi + 27, 'Best før', { d: true, v: 600, s: 7, f: b });
+    var best = $('#best').value;
+    if (best) s += D.tekst(52, yi + 27, D.datoTekst(best), { d: true, v: 600, s: 7, f: '#000' });
+    else s += '<rect x="50" y="' + (yi + 17) + '" width="80" height="14" fill="none" stroke="' + b + '" stroke-width="0.5"/>';
+    s += D.tekst(14, H - 6, D.ADR.namn + ' · ' + D.ADR.veg + ' · ' + D.ADR.post, { s: 3.8, f: b });
+    var a3 = $('#format').value === 'a3', mw = a3 ? 297 : 210, mh = a3 ? 420 : 297;
+    $('#sidestil').textContent = '@page { size: ' + (a3 ? 'A3' : 'A4') + ' portrait; margin: 0; }';
+    $('#plakat').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="' + mw + 'mm" height="' + mh + 'mm" viewBox="0 0 ' + W + ' ' + H + '">' + s + '</svg>';
+  }
+  document.querySelectorAll('input,select').forEach(function (el) { el.addEventListener('change', plakat); });
+  E.lastFontCss('fonts/').then(function () { plakat(); document.body.dataset.klar = '1'; });
+})();
+</script>
+</body>
+</html>

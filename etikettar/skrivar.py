@@ -121,7 +121,8 @@ def neste_id(prefiks='P'):
     return '%s%d' % (prefiks, n)
 
 
-LOGG_FELT = ['tid', 'pakke', 'produkt', 'namn', 'gram', 'kr', 'kgpris', 'parti', 'ref', 'slakteri', 'skjering', 'fryst', 'pakka', 'best_for', 'kode', 'modus', 'kopiar']
+LOGG_FELT = ['tid', 'pakke', 'produkt', 'namn', 'gram', 'kr', 'kgpris', 'parti', 'ref', 'slakteri', 'skjering', 'fryst', 'pakka', 'best_for', 'kode', 'modus', 'kopiar',
+             'slakta', 'morna', 'holdbar', 'utskrift']
 
 
 def logg(rad: dict):
@@ -183,6 +184,9 @@ class H(BaseHTTPRequestHandler):
                 r = send_zpl(d['zpl'])
                 if d.get('logg'): logg(d['logg'])
                 return self.svar(200, {"ok": True, "melding": r})
+            if p == '/api/logg':  # A4-ark frå blekkskrivaren: berre logg, ingen ZPL
+                for rad in d.get('rader', []): logg(rad)
+                return self.svar(200, {"ok": True, "tal": len(d.get('rader', []))})
             if p in ('/api/partier', '/api/prisar'):
                 return self.svar(200, lagra(p[5:], d))
         except Exception as e:
