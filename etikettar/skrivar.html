@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etikettstasjon · Fredheim gard</title>
+<style>
+:root { --brun: #5C4433; --papir: #F3ECDB; --sand: #CDB89C; --raud: #A44A2A; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--papir); color: #2b1f17; font-family: 'Instrument Sans', Arial, sans-serif; font-size: 16px; }
+header { background: var(--brun); color: var(--papir); padding: 14px 22px; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+header h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 24px; margin: 0; }
+#status { font-size: 13px; color: var(--sand); }
+main { display: flex; flex-wrap: wrap; gap: 24px; padding: 20px 22px 60px; max-width: 1240px; margin: 0 auto; }
+form { flex: 1 1 380px; display: flex; flex-direction: column; gap: 14px; }
+section.forh { flex: 999 1 460px; min-width: 0; }
+fieldset { border: 1px solid var(--sand); padding: 12px 14px 14px; margin: 0; display: grid; gap: 10px; }
+legend { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 0 6px; }
+label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; }
+input, select, textarea { width: 100%; min-width: 0; font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid #b9ad9a; background: #fff; color: inherit; min-height: 44px; }
+textarea { min-height: 80px; }
+.rad { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fanar { display: flex; gap: 0; border: 2px solid var(--brun); }
+.fanar button { flex: 1; min-height: 46px; border: 0; background: transparent; font: inherit; font-weight: 600; cursor: pointer; color: var(--brun); }
+.fanar button[aria-pressed="true"] { background: var(--brun); color: var(--papir); }
+.vekt { display: flex; gap: 10px; align-items: end; }
+.vekt label { flex: 1; }
+.knapp { min-height: 48px; padding: 10px 16px; border: 2px solid var(--brun); background: transparent; font: inherit; font-weight: 600; color: var(--brun); cursor: pointer; }
+.knapp.hoved { background: var(--brun); color: var(--papir); font-size: 18px; }
+.handling { display: flex; gap: 10px; flex-wrap: wrap; }
+.handling .hoved { flex: 1; }
+#stabil { font-size: 13px; }
+#forh { background: #fff; border: 1px solid var(--sand); padding: 14px; display: grid; gap: 12px; justify-items: center; }
+#forh canvas { max-width: 100%; height: auto; image-rendering: pixelated; border: 1px dashed #9b8f7d; }
+#forh .farge { max-width: 100%; }
+#info { font-size: 13px; color: #5a4a3c; white-space: pre-line; justify-self: stretch; }
+#melding { min-height: 24px; font-weight: 600; }
+#melding.feil { color: var(--raud); }
+details { border: 1px solid var(--sand); padding: 8px 12px; }
+summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.hjelp { font-size: 12px; color: #5a4a3c; margin: 0; }
+#ko { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+#ko li { display: flex; justify-content: space-between; gap: 8px; align-items: center; background: #fff; border: 1px solid #ddd2c0; padding: 6px 8px; }
+#ko button { min-height: 32px; border: 1px solid #b9ad9a; background: transparent; cursor: pointer; font: inherit; }
+#arkForh { justify-self: stretch; display: flex; flex-wrap: wrap; gap: 10px; }
+#arkForh .mini { width: 210mm; height: 297mm; zoom: .32; box-shadow: 0 0 0 4px #9b8f7d; background: #fff; }
+#trykk { display: none; }
+.side { position: relative; width: 210mm; height: 297mm; overflow: hidden; background: #fff; }
+.side .flate { position: absolute; left: 0; top: 0; width: 210mm; height: 297mm; transform-origin: 0 0; }
+.plass { position: absolute; overflow: hidden; }
+.plass svg { position: absolute; }
+.plass.tom { outline: 0.2mm dashed #c9bda9; outline-offset: -0.2mm; }
+.kal { position: absolute; background: #000; }
+.kaltekst { position: absolute; font: 3mm Arial, sans-serif; }
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  html, body { background: #fff !important; margin: 0; }
+  body > *:not(#trykk) { display: none !important; }
+  #trykk { display: block; }
+  .side { break-after: page; page-break-after: always; }
+  .side:last-child { break-after: auto; page-break-after: auto; }
+  .plass.tom { outline: none; }
+}
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header><h1>Etikettstasjon</h1><span id="status">Koplar til …</span></header>
+<main>
+<form id="skjema" autocomplete="off">
+  <div class="fanar" role="group" aria-label="Etikett">
+    <button type="button" data-type="kjot" aria-pressed="true">Kjøt</button>
+    <button type="button" data-type="kasse" aria-pressed="false">Kjøtkasse</button>
+    <button type="button" data-type="mjolk" aria-pressed="false">Mjølk</button>
+  </div>
+
+  <fieldset data-for="kjot kasse">
+    <legend>Vare</legend>
+    <label>Vare<select id="produkt"></select></label>
+    <div class="rad">
+      <label data-for="kjot">Kilopris (kr/kg)<input id="kgPris" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label data-for="kasse">Pris (kr)<input id="kassePris" type="number" min="0" step="1" inputmode="numeric"></label>
+      <label>Kopiar (kvar får eigen pakke-ID)<input id="kopiar" type="number" min="1" max="40" value="1"></label>
+      <label>Pakka den<input id="pakka" type="date"></label>
+    </div>
+    <label data-for="kasse">Innhald (éi linje per del, valfritt)<textarea id="innhald"></textarea></label>
+  </fieldset>
+
+  <fieldset data-for="kjot kasse">
+    <legend>Vekt</legend>
+    <div class="vekt">
+      <label>Nettovekt (gram)<input id="gram" type="number" min="1" step="1" inputmode="numeric" required></label>
+      <button class="knapp" type="button" id="lesVekt">Les vekt</button>
+    </div>
+    <span id="stabil"></span>
+  </fieldset>
+
+  <fieldset data-for="kjot kasse">
+    <legend>Parti (slakt)</legend>
+    <label>Parti<select id="parti"></select></label>
+    <div class="rad">
+      <label>Partikode (i QR)<input id="pKode" placeholder="B2611" pattern="[A-Za-z0-9\-]+"></label>
+      <label>Ref.nr.<input id="pRef" placeholder="frå slakteriet"></label>
+      <label>Slakteri (godkj.nr.)<input id="pSlakteri" placeholder="NO …"></label>
+      <label>Skjering (godkj.nr.)<input id="pSkjering" placeholder="NO …"></label>
+      <label>Slakta den<input id="pSlakta" type="date"></label>
+      <label>Mørna til (valfritt, fersk vare)<input id="pMorna" type="date"></label>
+      <label>Fryst den (tom = fersk)<input id="pFryst" type="date"></label>
+      <label>Holdbarheit<select id="pHold"><option value="auto">Auto: deig «siste forbruksdag», stykke «best før»</option><option value="bf">Best før</option><option value="sf">Siste forbruksdag</option></select></label>
+      <label id="bestNamn">Best før<input id="pBest" type="date"></label>
+    </div>
+    <p class="hjelp" id="datoHjelp"></p>
+    <div class="handling"><button class="knapp" type="button" id="lagraParti">Lagra parti</button></div>
+  </fieldset>
+
+  <fieldset data-for="mjolk" hidden>
+    <legend>Mjølk</legend>
+    <div class="rad">
+      <label>Tappa<input id="tappa" type="date"></label>
+      <label>Best før<input id="mBest" type="date"></label>
+      <label>Pris (kr)<input id="mPris" type="number" min="0" step="1"></label>
+      <label>Tal flasker<input id="mKopiar" type="number" min="1" max="200" value="1"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Utskrift</legend>
+    <label>Skrivar<select id="utdata"><option value="a4">A4-ark i blekkskrivar (Brother, farge)</option><option value="zpl">Etikettskrivar (ZPL, rull)</option></select></label>
+    <label data-ut="zpl">Etikettrull<select id="modus"><option value="overtrykk">Fortrykt rull (berre svart overtrykk)</option><option value="blank">Blank rull (alt i svart)</option></select></label>
+    <div data-ut="a4" class="rad">
+      <label>Etikettark<select id="ark"></select></label>
+      <label>Start på etikett nr.<input id="start" type="number" min="1" value="1"></label>
+    </div>
+    <details data-ut="a4">
+      <summary>Kalibrering og utfall</summary>
+      <div class="rad" style="margin-top:10px">
+        <label>Flytt høgre (mm)<input id="kdx" type="number" step="0.1" value="0"></label>
+        <label>Flytt ned (mm)<input id="kdy" type="number" step="0.1" value="0"></label>
+        <label>Skala breidd (%)<input id="ksx" type="number" step="0.01" value="100"></label>
+        <label>Skala høgd (%)<input id="ksy" type="number" step="0.01" value="100"></label>
+        <label>Utfall (mm)<input id="utfall" type="number" step="0.1" min="0" max="2" value="0.8"></label>
+      </div>
+      <p class="hjelp">Skriv ut kalibreringsarket på vanleg papir. Mål frå venstre papirkant til dei loddrette strekane og frå øvste kant til dei vassrette. Skriv inn måla, så reknar sida ut flytting og skala.</p>
+      <div class="rad">
+        <label>Strek «10 mm» målt (mm)<input id="m10x" type="number" step="0.1" placeholder="10"></label>
+        <label>Strek «200 mm» målt (mm)<input id="m200x" type="number" step="0.1" placeholder="200"></label>
+        <label>Strek «10 mm» øvst målt (mm)<input id="m10y" type="number" step="0.1" placeholder="10"></label>
+        <label>Strek «287 mm» målt (mm)<input id="m287y" type="number" step="0.1" placeholder="287"></label>
+      </div>
+      <div class="handling"><button class="knapp" type="button" id="kalibrerArk">Skriv ut kalibreringsark</button><button class="knapp" type="button" id="reknKal">Rekn ut</button></div>
+    </details>
+  </fieldset>
+
+  <div class="handling">
+    <button class="knapp hoved" type="submit" id="skriv">Skriv ut</button>
+    <button class="knapp" type="button" id="lastNed" data-ut="zpl">Last ned ZPL</button>
+  </div>
+  <fieldset data-ut="a4">
+    <legend>Ark som skal skrivast ut</legend>
+    <ul id="ko"></ul>
+    <div class="handling">
+      <button class="knapp hoved" type="button" id="skrivArk">Skriv ut ark</button>
+      <button class="knapp" type="button" id="tomKo">Tøm</button>
+      <button class="knapp" type="button" id="omatt">Skriv siste ark om att</button>
+      <button class="knapp" type="button" id="loggCsv">Last ned logg (CSV)</button>
+    </div>
+    <p class="hjelp">Brother: legg eitt etikettark i den manuelle matinga, vel «Faktisk storleik» / 100 %, papirtype «Blekkskrivarpapir» (film: «Anna glanset papir») og «Høg» kvalitet. Slå av topptekst og botntekst i nettlesaren.</p>
+  </fieldset>
+  <div id="melding" role="status"></div>
+</form>
+
+<section class="forh" aria-label="Førehandsvising">
+  <div id="forh">
+    <canvas id="punkt" aria-label="Slik skrivaren skriv ut (203 dpi)"></canvas>
+    <div class="farge" id="farge" aria-label="Ferdig etikett på fortrykt rull"></div>
+    <div id="info"></div>
+    <div id="arkForh" aria-label="Arket"></div>
+  </div>
+</section>
+</main>
+<div id="trykk" aria-hidden="true"></div>
+
+<script src="../src/qr.min.js"></script>
+<script src="fjell.js"></script>
+<script src="maler.js"></script>
+<script src="produkt.js"></script>
+<script>
+(function () {
+  'use strict';
+  var E = window.FH_ETIKETT, PR = window.FH_PRODUKT, $ = function (s) { return document.querySelector(s); };
+  var type = 'kjot', fontCss = '', tenar = false, ko = lokal('ko') || [], sistArk = lokal('sistArk') || [], butikk = 'https://dskorge.github.io/Fredheim-butikk/', partier = [], prisar = {}, sistKode = '', sistZpl = '';
+  function lokal(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem('fhe_' + k)); localStorage.setItem('fhe_' + k, JSON.stringify(v)); } catch (e) { return null; } }
+  function api(sti, data) {
+    return fetch('/api/' + sti, data ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) } : {})
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.feil || r.status); return j; }); });
+  }
+  function iso(d) { return d.toISOString().slice(0, 10); }
+  function plussDagar(s, n) { var d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); }
+  function plussMnd(s, n) { var d = new Date(s + 'T12:00:00'); d.setMonth(d.getMonth() + n); return iso(d); }
+  function melding(t, feil) { var m = $('#melding'); m.textContent = t; m.className = feil ? 'feil' : ''; }
+
+  // ---------- Oppsett ----------
+  function fyllProdukt() {
+    var l = type === 'kasse' ? PR.kasse : PR.kjot;
+    $('#produkt').innerHTML = l.map(function (p) { return '<option value="' + p.id + '">' + p.namn + '</option>'; }).join('');
+    var sist = lokal('produkt_' + type); if (sist) $('#produkt').value = sist;
+    produktByte();
+  }
+  function produkt() { var l = type === 'kasse' ? PR.kasse : PR.kjot; return l.filter(function (p) { return p.id === $('#produkt').value; })[0] || l[0]; }
+  function produktByte() {
+    var p = produkt(); lokal('produkt_' + type, p.id);
+    if (type === 'kjot') $('#kgPris').value = prisar[p.id] != null ? prisar[p.id] : (p.kg || '');
+    if (type === 'kasse') $('#kassePris').value = prisar[p.id] != null ? prisar[p.id] : p.pris;
+    teikn();
+  }
+  function fyllPartier() {
+    $('#parti').innerHTML = '<option value="">– nytt parti –</option>' + partier.map(function (p, i) { return '<option value="' + i + '">' + p.kode + ' · ref ' + (p.ref || '?') + ' · fryst ' + (p.fryst || '–') + '</option>'; }).join('');
+    var sist = lokal('parti'); if (sist != null && partier[sist]) { $('#parti').value = sist; visParti(partier[sist]); }
+  }
+  function visParti(p) { $('#pKode').value = p.kode || ''; $('#pRef').value = p.ref || ''; $('#pSlakteri').value = p.slakteri || ''; $('#pSkjering').value = p.skjering || '';
+    $('#pSlakta').value = p.slakta || ''; $('#pMorna').value = p.morna || ''; $('#pFryst').value = p.fryst || ''; $('#pHold').value = p.holdbar || 'auto'; $('#pBest').value = p.bestFor || ''; datoHjelp(); }
+  function lesParti() { return { kode: $('#pKode').value.trim(), ref: $('#pRef').value.trim(), slakteri: $('#pSlakteri').value.trim(), skjering: $('#pSkjering').value.trim(),
+    slakta: $('#pSlakta').value, morna: $('#pMorna').value, fryst: $('#pFryst').value, holdbar: $('#pHold').value, bestFor: $('#pBest').value }; }
+  // Fryst vare: alltid «Best før». Fersk: deig «Siste forbruksdag», heile stykke «Best før» (kan endrast).
+  function holdbar(pa, p) { if (pa.fryst) return 'bf'; if (pa.holdbar === 'bf' || pa.holdbar === 'sf') return pa.holdbar; return p && p.kverna ? 'sf' : 'bf'; }
+  function datoHjelp() {
+    if (type === 'mjolk') return;
+    var pa = lesParti(), h = holdbar(pa, produkt());
+    $('#bestNamn').firstChild.textContent = h === 'sf' ? 'Siste forbruksdag' : 'Best før';
+    var t = pa.fryst ? 'Fryst vare: etiketten får «Fryst den» og «Best før».' : 'Fersk vare: etiketten får ' + (h === 'sf' ? '«Siste forbruksdag»' : '«Best før»') + ' og «Kan frysast før datoen».';
+    if (pa.slakta) { var ref = pa.fryst || $('#pakka').value; if (ref) t += ' Mørna ' + Math.round((new Date(ref) - new Date(pa.slakta)) / 864e5) + ' døgn.'; }
+    $('#datoHjelp').textContent = t;
+  }
+  function settType(t) {
+    type = t;
+    document.querySelectorAll('.fanar button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.type === t ? 'true' : 'false'); });
+    document.querySelectorAll('[data-for]').forEach(function (el) { el.hidden = el.dataset.for.split(' ').indexOf(t) < 0; });
+    $('#utdata').value = t === 'mjolk' ? 'zpl' : (lokal('utdata') || 'a4');
+    visUt(); fyllArk();
+    if (t !== 'mjolk') fyllProdukt(); else teikn();
+  }
+
+  // ---------- Data til malen ----------
+  function data(id) {
+    var base = butikk;
+    if (type === 'mjolk') {
+      return { tappa: $('#tappa').value, bestFor: $('#mBest').value, pris: +$('#mPris').value, kode: E.hylleKode(base, 'mjolk') };
+    }
+    var p = produkt(), g = Math.round(+$('#gram').value || 0), pa = lesParti();
+    var krTot, kgPris;
+    if (type === 'kjot') { kgPris = +$('#kgPris').value || 0; krTot = Math.round(kgPris * g / 1000); }
+    else { krTot = +$('#kassePris').value || 0; kgPris = g ? krTot * 1000 / g : 0; }
+    var pakka = $('#pakka').value || iso(new Date());
+    var dato = pa.fryst || pakka;
+    var kode = '';
+    try { kode = E.pakkeKode(base, { id: id || 'P0000', produkt: p.id, g: g, kr: krTot, dato: E.ddmmaa(dato), parti: pa.kode || 'X' }); } catch (e) { melding(e.message, true); }
+    return { namn: p.namn, tekst: p.tekst, g: g, kr: krTot, kgPris: kgPris, slakta: pa.slakta, morna: pa.morna, fryst: pa.fryst, pakka: pakka, bestFor: pa.bestFor, holdbar: holdbar(pa, p),
+      ref: pa.ref, slakteri: pa.slakteri, skjering: pa.skjering, kverna: !!p.kverna, kode: kode, parti: pa.kode,
+      innhald: type === 'kasse' ? $('#innhald').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean) : [] };
+  }
+  function mal(d, modus, t, ekstra) { t = t || type; var o = Object.assign({ modus: modus, fontCss: fontCss }, ekstra || {}); return (t === 'kjot' ? E.kjot : t === 'kasse' ? E.kasse : E.mjolk)(d, o); }
+
+  // ---------- Førehandsvising ----------
+  var tid = null;
+  function teikn() { clearTimeout(tid); tid = setTimeout(teiknNo, 120); }
+  function teiknNo() {
+    if (!fontCss) return;
+    var d = data(), a4 = $('#utdata').value === 'a4', modus = a4 ? 'samla' : $('#modus').value, A = a4 ? arkFormat() : null;
+    var et = mal(d, modus, type, A ? { w: A.w, h: A.h } : null);
+    teiknArk();
+    E.teikn(et.svg, et.w, et.h).then(function (c) {
+      var p = $('#punkt'); p.width = c.width; p.height = c.height; p.getContext('2d').drawImage(c, 0, 0);
+      p.style.width = (et.w * 4) + 'px';
+      $('#farge').innerHTML = mal(d, modus === 'blank' ? 'blank' : 'samla').svg.replace('<svg ', '<svg style="width:' + (et.w * 4) + 'px;height:auto;display:block" ');
+      var q = et.qr;
+      $('#punkt').hidden = a4;
+      $('#info').textContent = 'Etikett ' + String(et.w).replace('.', ',') + ' × ' + String(et.h).replace('.', ',') + ' mm' + (a4 ? ' · ' + A.namn : ' · ' + c.width + ' × ' + c.height + ' punkt (203 dpi)') + '\n' +
+        (q ? 'QR: ' + q.modular + ' × ' + q.modular + ' modular à ' + q.modul_mm.toFixed(3).replace('.', ',') + ' mm = ' + q.side_mm.toFixed(1).replace('.', ',') + ' mm\n' : '') +
+        (d.kode ? 'Kode: ' + d.kode.split('#v=')[1] : '');
+    });
+  }
+
+  // ---------- Utskrift ----------
+  function nyId() {
+    if (tenar) return api('neste', { prefiks: 'P' }).then(function (r) { return r.id; });
+    var n = (lokal('teljar') || 1000) + 1; lokal('teljar', n); return Promise.resolve('P' + n);
+  }
+  function sjekkData(d) {
+    if (type !== 'mjolk') {
+      if (!d.g) throw new Error('Manglar vekt.');
+      if (!d.kr) throw new Error('Manglar pris.');
+      if (!d.parti) throw new Error('Manglar partikode.');
+      if (!d.bestFor) throw new Error('Manglar ' + (d.holdbar === 'sf' ? 'siste forbruksdag' : 'best før-dato') + '.');
+      if (!d.slakta) throw new Error('Manglar slaktedato.');
+      if (d.fryst && d.fryst < d.slakta) throw new Error('Frysedato er før slaktedato.');
+    } else if (!d.tappa || !d.bestFor) throw new Error('Manglar dato.');
+  }
+  // Lagar éin etikett per kopi, kvar med eigen pakke-ID (mjølk: same hyllekode, ^PQ).
+  function lagEtikettar() {
+    var kopiar = type === 'mjolk' ? +$('#mKopiar').value || 1 : +$('#kopiar').value || 1;
+    if (type === 'mjolk') { var dm = data(null); sjekkData(dm); return Promise.resolve([{ d: dm, id: null, kopiar: kopiar }]); }
+    sjekkData(data('P0000'));
+    var ut = [], kjede = Promise.resolve();
+    for (var i = 0; i < kopiar; i++) kjede = kjede.then(nyId).then(function (id) { ut.push({ d: data(id), id: id, kopiar: 1 }); });
+    return kjede.then(function () { return ut; });
+  }
+  function loggRad(u, utskrift) {
+    var d = u.d;
+    return { pakke: u.id || '', produkt: type === 'mjolk' ? 'mjolk' : produktId(d), namn: d.namn || 'Heilmelk', gram: d.g || '', kr: d.kr || d.pris,
+      kgpris: d.kgPris ? d.kgPris.toFixed(2) : '', parti: d.parti || '', ref: d.ref || '', slakteri: d.slakteri || '', skjering: d.skjering || '',
+      slakta: d.slakta || '', morna: d.morna || '', fryst: d.fryst || '', pakka: d.pakka || d.tappa || '', best_for: d.bestFor, holdbar: d.holdbar || '',
+      kode: d.kode, modus: utskrift === 'a4' ? 'samla' : $('#modus').value, kopiar: u.kopiar, utskrift: utskrift };
+  }
+  function produktId(d) { var m = /#v=F1\.[^.]+\.([^.]+)\./.exec(d.kode || ''); return m ? m[1] : produkt().id; }
+  function zplFor(liste) {
+    return liste.reduce(function (p, u) {
+      return p.then(function (acc) { var et = mal(u.d, $('#modus').value); return E.teikn(et.svg, et.w, et.h).then(function (c) { return acc + E.zpl(c, u.kopiar); }); });
+    }, Promise.resolve(''));
+  }
+  $('#skjema').addEventListener('submit', function (e) {
+    e.preventDefault(); melding('Lagar etikett …');
+    var a4 = $('#utdata').value === 'a4';
+    lagEtikettar().then(function (liste) {
+      if (a4) {
+        liste.forEach(function (u) { ko.push({ type: type, d: u.d, id: u.id }); });
+        lagreKo(); melding(liste.length + ' etikett' + (liste.length > 1 ? 'ar' : '') + ' lagt på arket (' + liste.map(function (u) { return u.id; }).join(', ') + ').');
+        if (type !== 'mjolk') $('#gram').value = '';
+        teikn(); return;
+      }
+      return zplFor(liste).then(function (z) {
+        if (!tenar) { lastNed(z); melding('Ingen etikettstasjon: ZPL lasta ned i staden.'); return; }
+        return api('skriv', { zpl: z, logg: null }).then(function (r) {
+          return api('logg', { rader: liste.map(function (u) { return loggRad(u, 'zpl'); }) }).then(function () {
+            melding(liste.map(function (u) { return u.id || 'Mjølk'; }).join(', ') + ': ' + r.melding); if (type !== 'mjolk') $('#gram').value = ''; teikn();
+          });
+        });
+      });
+    }).catch(function (err) { melding(err.message, true); });
+  });
+  function lastNed(tekst, namn, typ) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([tekst], { type: typ || 'text/plain' })); a.download = namn || 'etikett.zpl'; a.click(); }
+  $('#lastNed').addEventListener('click', function () { lagEtikettar().then(zplFor).then(function (z) { lastNed(z); }).catch(function (e) { melding(e.message, true); }); });
+
+  // ---------- A4-ark (blekkskrivar) ----------
+  // Herma 4598/4599: 4 × 105 × 148 mm på A4 utan mellomrom. Kjøt: kvar etikett blir delt i to (105 × 74),
+  // nedste halvdel snudd 180°, så bandet ligg mot stansekanten og snittet går mellom to lyse felt.
+  var ARK = {
+    kjot: [
+      { id: 'h4598', namn: 'Herma 4598/4599 film 105 × 148, delt i to: 8 kjøtetikettar 105 × 74', w: 105, h: 74, kol: 2, rad: 4, x0: 0, y0: 0.5, dx: 105, dy: 74, snu: true, kutt: true },
+      { id: 'j8165', namn: 'Avery J8165 papir 99,1 × 67,7: 8 per ark', w: 99.1, h: 67.7, kol: 2, rad: 4, x0: 4.65, y0: 13.1, dx: 101.6, dy: 67.7 },
+      { id: 'papir', namn: 'Vanleg A4-papir (prøve, same plassering som Herma 4598)', w: 105, h: 74, kol: 2, rad: 4, x0: 0, y0: 0.5, dx: 105, dy: 74, snu: true, kutt: true }
+    ],
+    kasse: [
+      { id: 'h4598', namn: 'Herma 4598/4599 film 105 × 148: 4 per ark', w: 105, h: 148, kol: 2, rad: 2, x0: 0, y0: 0.5, dx: 105, dy: 148 },
+      { id: 'j8169', namn: 'Avery J8169 papir 99,1 × 139: 4 per ark', w: 99.1, h: 139, kol: 2, rad: 2, x0: 4.65, y0: 9.5, dx: 101.6, dy: 139 },
+      { id: 'papir', namn: 'Vanleg A4-papir (prøve, same plassering som Herma 4598)', w: 105, h: 148, kol: 2, rad: 2, x0: 0, y0: 0.5, dx: 105, dy: 148 }
+    ]
+  };
+  function arkListe(t) { return ARK[t === 'kasse' ? 'kasse' : 'kjot']; }
+  function arkFormat(t) { t = t || type; var l = arkListe(t), v = lokal('ark_' + t); return l.filter(function (a) { return a.id === v; })[0] || l[0]; }
+  function fyllArk() {
+    if (type === 'mjolk') return;
+    $('#ark').innerHTML = arkListe(type).map(function (a) { return '<option value="' + a.id + '">' + a.namn + '</option>'; }).join('');
+    $('#ark').value = arkFormat().id; $('#start').max = arkFormat().kol * arkFormat().rad; $('#start').value = lokal('start_' + type) || 1;
+  }
+  function visUt() {
+    var a4 = $('#utdata').value === 'a4';
+    document.querySelectorAll('[data-ut]').forEach(function (el) { el.hidden = el.dataset.ut !== (a4 ? 'a4' : 'zpl') || (a4 && type === 'mjolk'); });
+    $('#utdata').querySelector('[value=a4]').disabled = type === 'mjolk';
+    $('#skriv').textContent = a4 ? 'Legg på arket' : 'Skriv ut';
+  }
+  function lagreKo() { lokal('ko', ko); visKo(); }
+  function visKo() {
+    $('#ko').innerHTML = ko.length ? ko.map(function (k, i) {
+      return '<li><span>' + k.id + ' · ' + k.d.namn + (k.d.g ? ' · ' + E.vekt(k.d.g) : '') + ' · ' + E.kr(k.d.kr) + '</span><button type="button" data-fjern="' + i + '" aria-label="Fjern">Fjern</button></li>';
+    }).join('') : '<li>Ingen etikettar enno.</li>';
+  }
+  $('#ko').addEventListener('click', function (e) { var b = e.target.closest('[data-fjern]'); if (b) { ko.splice(+b.dataset.fjern, 1); lagreKo(); teiknArk(); } });
+
+  function kalib() { return { dx: +$('#kdx').value || 0, dy: +$('#kdy').value || 0, sx: (+$('#ksx').value || 100) / 100, sy: (+$('#ksy').value || 100) / 100, u: Math.max(0, +$('#utfall').value || 0) }; }
+  function mm(n) { return (Math.round(n * 1000) / 1000) + 'mm'; }
+  // Utfall per side: berre mot arkkant, mot mellomrom mellom etikettane, eller band mot band. Aldri inn på ein lys nabo.
+  function utfallSider(A, r, c, u, snudd) {
+    var gx = A.dx - A.w, gy = A.dy - A.h, sider = {};
+    var bandOpp = !snudd; // bandet ligg øvst på etiketten om han ikkje er snudd
+    sider.l = c === 0 ? u : Math.min(u, gx / 2);
+    sider.r = c === A.kol - 1 ? u : Math.min(u, gx / 2);
+    function nabo(rr) { return A.snu && rr % 2 === 1; }
+    sider.t = r === 0 ? u : (gy > 0 ? Math.min(u, gy / 2) : (bandOpp && nabo(r - 1) ? u : 0));
+    sider.b = r === A.rad - 1 ? u : (gy > 0 ? Math.min(u, gy / 2) : (!bandOpp && !nabo(r + 1) ? u : 0));
+    return sider;
+  }
+  // Lagar A4-sider. liste: [{type, d}]; startNr: første ledige plass (1 …).
+  function lagSider(t, liste, startNr, medTomme) {
+    var A = arkFormat(t), K = kalib(), per = A.kol * A.rad, sider = [], plass = (startNr || 1) - 1, side = null;
+    function nySide() { side = document.createElement('div'); side.className = 'side'; var fl = document.createElement('div'); fl.className = 'flate';
+      fl.style.transform = 'translate(' + mm(K.dx) + ',' + mm(K.dy) + ') scale(' + K.sx + ',' + K.sy + ')'; side.appendChild(fl); sider.push(side); return fl; }
+    var fl = nySide();
+    liste.forEach(function (k) {
+      if (plass >= per) { plass = 0; fl = nySide(); }
+      var r = Math.floor(plass / A.kol), c = plass % A.kol, snudd = !!(A.snu && r % 2 === 1);
+      var x = A.x0 + c * A.dx, y = A.y0 + r * A.dy, U = utfallSider(A, r, c, K.u, snudd), b = K.u;
+      var et = mal(k.d, 'samla', t, { w: A.w, h: A.h, utfall: b, fontCss: '' });
+      var p = document.createElement('div'); p.className = 'plass';
+      p.style.left = mm(x - U.l); p.style.top = mm(y - U.t); p.style.width = mm(A.w + U.l + U.r); p.style.height = mm(A.h + U.t + U.b);
+      p.innerHTML = et.svg;
+      var sv = p.firstChild; sv.style.left = mm(U.l - b); sv.style.top = mm(U.t - b);
+      if (snudd) sv.style.transform = 'rotate(180deg)';
+      p.dataset.p = plass; fl.appendChild(p); plass++;
+    });
+    if (medTomme) sider.forEach(function (sd, si) {
+      for (var i = 0; i < per; i++) {
+        if (!sd.querySelector('[data-p="' + i + '"]')) {
+          var r = Math.floor(i / A.kol), c = i % A.kol, q = document.createElement('div'); q.className = 'plass tom'; q.dataset.p = i;
+          q.style.left = mm(A.x0 + c * A.dx); q.style.top = mm(A.y0 + r * A.dy); q.style.width = mm(A.w); q.style.height = mm(A.h);
+          sd.firstChild.insertBefore(q, sd.firstChild.firstChild);
+        }
+      }
+    });
+    return sider;
+  }
+  function koGrupper() { var g = { kjot: [], kasse: [] }; ko.forEach(function (k) { g[k.type === 'kasse' ? 'kasse' : 'kjot'].push(k); }); return g; }
+  function teiknArk() {
+    var f = $('#arkForh'); f.innerHTML = '';
+    if ($('#utdata').value !== 'a4' || type === 'mjolk') return;
+    var g = koGrupper()[type === 'kasse' ? 'kasse' : 'kjot'];
+    lagSider(type, g, +$('#start').value || 1, true).forEach(function (sd) { sd.classList.add('mini'); f.appendChild(sd); });
+  }
+  function skrivSider(sider) {
+    var tr = $('#trykk'); tr.innerHTML = ''; sider.forEach(function (sd) { tr.appendChild(sd); });
+    setTimeout(function () { try { window.print(); } catch (e) {} }, 60);
+  }
+  $('#skrivArk').addEventListener('click', function () {
+    if (!ko.length) return melding('Ingen etikettar på arket.', true);
+    var g = koGrupper(), sider = [], rader = [];
+    ['kjot', 'kasse'].forEach(function (t) {
+      if (!g[t].length) return;
+      var st = +lokal('start_' + t) || 1; if (t === type) st = +$('#start').value || 1;
+      sider = sider.concat(lagSider(t, g[t], st));
+      var per = arkFormat(t).kol * arkFormat(t).rad;
+      lokal('start_' + t, ((st - 1 + g[t].length) % per) + 1);
+      g[t].forEach(function (k) { rader.push(Object.assign(loggRadFraKo(k), { utskrift: 'a4:' + arkFormat(t).id })); });
+    });
+    sistArk = ko.slice(); lokal('sistArk', sistArk);
+    var lg = lokal('logg') || []; lokal('logg', lg.concat(rader.map(function (r) { return Object.assign({ tid: new Date().toISOString().slice(0, 19) }, r); })));
+    (tenar ? api('logg', { rader: rader }) : Promise.resolve()).catch(function (e) { melding('Logg: ' + e.message, true); });
+    ko = []; lagreKo(); fyllArk();
+    melding(rader.length + ' etikettar sende til utskrift og logga. Neste ark startar på nr. ' + $('#start').value + '.');
+    skrivSider(sider); teiknArk();
+  });
+  function loggRadFraKo(k) { var t0 = type; type = k.type; var r = loggRad({ d: k.d, id: k.id, kopiar: 1 }, 'a4'); type = t0; r.produkt = produktId(k.d); return r; }
+  $('#omatt').addEventListener('click', function () {
+    if (!sistArk.length) return melding('Ingen ark er skrivne ut enno.', true);
+    var g = { kjot: [], kasse: [] }; sistArk.forEach(function (k) { g[k.type === 'kasse' ? 'kasse' : 'kjot'].push(k); });
+    var sider = []; ['kjot', 'kasse'].forEach(function (t) { if (g[t].length) sider = sider.concat(lagSider(t, g[t], 1)); });
+    melding('Skriv ut att ' + sistArk.length + ' etikettar (same pakke-ID, ikkje logga på nytt).'); skrivSider(sider);
+  });
+  $('#tomKo').addEventListener('click', function () { ko = []; lagreKo(); teiknArk(); });
+  $('#loggCsv').addEventListener('click', function () {
+    var lg = lokal('logg') || []; if (!lg.length) return melding(tenar ? 'Loggen på Huben ligg i etikettar/data/pakkar.csv.' : 'Ingen logg enno.', true);
+    var felt = ['tid', 'pakke', 'produkt', 'namn', 'gram', 'kr', 'kgpris', 'parti', 'ref', 'slakteri', 'skjering', 'slakta', 'morna', 'fryst', 'pakka', 'best_for', 'holdbar', 'kode', 'utskrift'];
+    var csv = felt.join(';') + '\n' + lg.map(function (r) { return felt.map(function (k) { return String(r[k] == null ? '' : r[k]).replace(/[;\n]/g, ' '); }).join(';'); }).join('\n');
+    lastNed('﻿' + csv, 'pakkar.csv', 'text/csv;charset=utf-8');
+  });
+  // Kalibreringsark: strekar ved 10/105/200 mm (x) og 10/148,5/287 mm (y) og omrisset av etikettane.
+  $('#kalibrerArk').addEventListener('click', function () {
+    var sd = lagSider(type === 'kasse' ? 'kasse' : 'kjot', [], 1, true)[0], fl = sd.firstChild;
+    function strek(x, y, w, h) { var d = document.createElement('div'); d.className = 'kal'; d.style.left = mm(x); d.style.top = mm(y); d.style.width = mm(w); d.style.height = mm(h); fl.appendChild(d); }
+    function txt(x, y, t) { var d = document.createElement('div'); d.className = 'kaltekst'; d.style.left = mm(x); d.style.top = mm(y); d.textContent = t; fl.appendChild(d); }
+    [10, 105, 200].forEach(function (x) { strek(x - 0.1, 20, 0.2, 257); txt(x + 1, 22, x + ' mm'); });
+    [10, 148.5, 287].forEach(function (y) { strek(20, y - 0.1, 170, 0.2); txt(22, y - 5, String(y).replace('.', ',') + ' mm'); });
+    txt(60, 60, 'Kalibreringsark · ' + arkFormat().namn);
+    sd.querySelectorAll('.plass.tom').forEach(function (q) { q.style.outline = '0.2mm solid #999'; });
+    skrivSider([sd]);
+  });
+  $('#reknKal').addEventListener('click', function () {
+    var a = +$('#m10x').value, b = +$('#m200x').value, c = +$('#m10y').value, d = +$('#m287y').value, K = kalib();
+    if (a && b) { var sx = (b - a) / 190 * K.sx; $('#ksx').value = (sx * 100).toFixed(2); $('#kdx').value = (K.dx + (a - 10 * (b - a) / 190)).toFixed(1); }
+    if (c && d) { var sy = (d - c) / 277 * K.sy; $('#ksy').value = (sy * 100).toFixed(2); $('#kdy').value = (K.dy + (c - 10 * (d - c) / 277)).toFixed(1); }
+    lagreKal(); melding('Kalibrering oppdatert. Skriv ut kalibreringsarket på nytt for å kontrollere.');
+  });
+  function lagreKal() { lokal('kalib', { dx: $('#kdx').value, dy: $('#kdy').value, sx: $('#ksx').value, sy: $('#ksy').value, u: $('#utfall').value }); teiknArk(); }
+  ['#kdx', '#kdy', '#ksx', '#ksy', '#utfall'].forEach(function (s) { $(s).addEventListener('change', lagreKal); });
+  $('#utdata').addEventListener('change', function () { lokal('utdata', $('#utdata').value); visUt(); teikn(); });
+  $('#ark').addEventListener('change', function () { lokal('ark_' + type, $('#ark').value); fyllArk(); teikn(); });
+  $('#start').addEventListener('change', function () { lokal('start_' + type, +$('#start').value || 1); teiknArk(); });
+
+  // ---------- Vekt ----------
+  function lesVekt() {
+    if (!tenar) { melding('Vekta krev etikettstasjonen på Huben. Skriv inn vekt for hand.', true); return; }
+    $('#stabil').textContent = 'Les vekt …';
+    api('vekt').then(function (v) { $('#gram').value = v.g; $('#stabil').textContent = v.stabil ? 'Stabil vekt' : 'Ustabil – vent og les på nytt'; teikn(); })
+      .catch(function (e) { $('#stabil').textContent = 'Vekt: ' + e.message; });
+  }
+  $('#lesVekt').addEventListener('click', lesVekt);
+
+  // ---------- Hendingar ----------
+  document.querySelectorAll('.fanar button').forEach(function (b) { b.addEventListener('click', function () { settType(b.dataset.type); }); });
+  $('#produkt').addEventListener('change', function () { produktByte(); datoHjelp(); });
+  $('#parti').addEventListener('change', function () { var i = $('#parti').value; lokal('parti', i === '' ? null : +i); if (i !== '') visParti(partier[+i]); else visParti({}); teikn(); });
+  $('#pFryst').addEventListener('change', function () { if ($('#pFryst').value && !$('#pBest').value) $('#pBest').value = plussMnd($('#pFryst').value, 12); datoHjelp(); teikn(); });
+  ['#pSlakta', '#pHold', '#pakka', '#pMorna'].forEach(function (s) { $(s).addEventListener('change', function () { datoHjelp(); teikn(); }); });
+  $('#lagraParti').addEventListener('click', function () {
+    var p = lesParti(); if (!p.kode) return melding('Partikode manglar.', true);
+    var i = $('#parti').value; if (i === '') { partier.push(p); i = partier.length - 1; } else partier[+i] = p;
+    lokal('parti', +i); (tenar ? api('partier', partier) : Promise.resolve(lokal('partier', partier))).then(function () { fyllPartier(); melding('Parti lagra.'); });
+  });
+  ['#kgPris', '#kassePris'].forEach(function (s) { $(s).addEventListener('change', function () { prisar[produkt().id] = +$(s).value; tenar ? api('prisar', prisar) : lokal('prisar', prisar); }); });
+  $('#skjema').addEventListener('input', teikn);
+  $('#tappa').addEventListener('change', function () { $('#mBest').value = plussDagar($('#tappa').value, PR.mjolk.dagar); teikn(); });
+
+  // ---------- Start ----------
+  var idag = iso(new Date());
+  $('#tappa').value = idag; $('#mBest').value = plussDagar(idag, PR.mjolk.dagar); $('#mPris').value = PR.mjolk.pris; $('#pakka').value = idag;
+  var kl = lokal('kalib'); if (kl) { $('#kdx').value = kl.dx; $('#kdy').value = kl.dy; $('#ksx').value = kl.sx; $('#ksy').value = kl.sy; $('#utfall').value = kl.u; }
+  $('#utdata').value = lokal('utdata') || 'a4'; visKo();
+  E.lastFontCss('fonts/').then(function (css) {
+    fontCss = css;
+    return api('status').then(function (s) {
+      tenar = true; butikk = s.butikk || butikk;
+      $('#status').textContent = (s.test ? 'TESTMODUS · ' : '') + 'Skrivar: ' + (s.skrivar.adresse || s.skrivar.sti || s.skrivar.type) + ' · Vekt: ' + (s.vekt || '–');
+      return Promise.all([api('partier'), api('prisar')]);
+    }).then(function (r) { partier = r[0] || []; prisar = r[1] || {}; })
+      .catch(function () { tenar = false; $('#status').textContent = 'Demo utan etikettstasjon (vekt for hand, ZPL blir lasta ned)'; partier = lokal('partier') || []; prisar = lokal('prisar') || {}; });
+  }).then(function () { fyllPartier(); settType('kjot'); document.body.dataset.klar = '1'; });
+})();
+</script>
+</body>
+</html>

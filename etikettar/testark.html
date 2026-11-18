@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testark – etikettar · Fredheim gard</title>
+<style>
+@page { size: A4; margin: 10mm; }
+body { margin: 0; font-family: 'Instrument Sans', Arial, sans-serif; color: #2b1f17; background: #F3ECDB; }
+main { max-width: 210mm; margin: 0 auto; padding: 8mm 0 20mm; }
+h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 26px; margin: 0 10mm 4px; }
+p.inn { margin: 0 10mm 14px; font-size: 14px; max-width: 160mm; }
+h2 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; margin: 18px 10mm 8px; }
+.ark { display: flex; flex-wrap: wrap; gap: 6mm; padding: 0 10mm; align-items: flex-start; }
+.et { background: #fff; outline: 0.2mm dashed #9b8f7d; line-height: 0; }
+.et svg { display: block; }
+.side { break-before: page; }
+.knapp { margin: 0 10mm 10px; font: inherit; padding: 8px 14px; border: 2px solid #5C4433; background: transparent; cursor: pointer; }
+@media print { body { background: #fff; } .ikkjeprint { display: none; } main { padding: 0; } h1, p.inn, h2 { margin-left: 0; } .ark { padding: 0; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Testark – etikettar</h1>
+<p class="inn ikkjeprint">Skriv ut i 100 % (ikkje «tilpass til side»). Kodane er ekte F1-kodar mot butikken, så du kan skanne dei med kassa på framsida. Side 1 er for blank rull (alt svart). Side 2 viser korleis fortrykte etikettar blir.</p>
+<button class="knapp ikkjeprint" type="button" onclick="window.print()">Skriv ut</button>
+<h2>Blank rull · 1 : 1</h2>
+<div class="ark" id="blank"></div>
+<div class="side">
+<h2>Fortrykt rull + overtrykk · 1 : 1</h2>
+<div class="ark" id="samla"></div>
+</div>
+</main>
+<script src="../src/qr.min.js"></script>
+<script src="fjell.js"></script>
+<script src="maler.js"></script>
+<script>
+(function () {
+  var E = window.FH_ETIKETT;
+  var base = new URL('../', location.href).href;
+  var qs = new URLSearchParams(location.search); if (qs.get('base')) base = qs.get('base');
+  var parti = { slakta: '2026-11-02', ref: '2611-7', slakteri: 'NO [slakteri]', skjering: 'NO [skjering]', fryst: '2026-11-18', bestFor: '2027-11-18', partiKode: 'B2611' };
+  function kjotData(id, produkt, namn, g, kgPris) {
+    var krTot = Math.round(kgPris * g / 1000);
+    return Object.assign({}, parti, { namn: namn, g: g, kgPris: kgPris, kr: krTot,
+      kode: E.pakkeKode(base, { id: id, produkt: produkt, g: g, kr: krTot, dato: E.ddmmaa(parti.fryst), parti: parti.partiKode }) });
+  }
+  var morbrad = kjotData('P9001', 'morbrad', 'Mørbrad', 1035, 549);
+  var deig = Object.assign(kjotData('P9002', 'deig', 'Kjøtdeig', 512, 219), { kverna: true, fryst: '', pakka: '2026-11-16', bestFor: '2026-11-20', holdbar: 'sf' }); // fersk
+  var kasseG = 10240, kasseKr = 2890;
+  var kasse = Object.assign({}, parti, { namn: 'Familiekasse', tekst: 'ca. 10 kg blanda stykningsdelar', g: kasseG, kr: kasseKr, kgPris: kasseKr * 1000 / kasseG,
+    innhald: ['Entrecôte og ytrefilet', 'Rundstek og bogstek', 'Grytekjøt', 'Kjøtdeig, 4 × 500 g'],
+    kode: E.pakkeKode(base, { id: 'P9003', produkt: 'familie', g: kasseG, kr: kasseKr, dato: E.ddmmaa(parti.fryst), parti: parti.partiKode }) });
+  var mjolk = { tappa: '2026-11-18', bestFor: '2026-11-25', pris: 45, kode: E.hylleKode(base, 'mjolk') };
+
+  function legg(id, et) { var d = document.createElement('div'); d.className = 'et'; d.innerHTML = et.svg; document.getElementById(id).appendChild(d); }
+  E.lastFontCss('fonts/').then(function () {
+    ['blank', 'samla'].forEach(function (m) {
+      legg(m, E.kjot(morbrad, { modus: m }));
+      legg(m, E.kjot(deig, { modus: m }));
+      legg(m, E.mjolk(mjolk, { modus: m }));
+      legg(m, E.kasse(kasse, { modus: m }));
+    });
+    document.body.dataset.klar = '1';
+  });
+  window.FH_TEST = { morbrad: morbrad, deig: deig, kasse: kasse, mjolk: mjolk };
+})();
+</script>
+</body>
+</html>

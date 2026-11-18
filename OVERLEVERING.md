@@ -15,6 +15,7 @@ Les denne fila før du endrar noko. Alt du treng for å halde fram, ligg i dette
 | `src/qr.min.js` | qrcode-generator (MIT) – lagar QR på etikettane |
 | `src/jsqr.min.js` | jsQR (Apache-2.0) – les QR frå kameraet |
 | `build.py` | Set saman `index.html` |
+| `etikettar/` | Etikettmalar, etikettstasjon (vekt → A4-ark i blekkskrivar eller ZPL), eggplakat og testar. Sjå `etikettar/README.md` |
 
 Språk i butikken: nynorsk. Fargar og skrift frå Fredheim-profilen (Fraunces + Instrument Sans). Vipps-knapp `#FF5B24`.
 
@@ -28,10 +29,23 @@ Språk i butikken: nynorsk. Fargar og skrift frå Fredheim-profilen (Fraunces + 
 | Halv kasse | 1 490 kr |
 | Kjøtdeigpakke 5 kg | 1 090 kr |
 | Helgepakke ca. 2 kg | 990 kr |
-| Heilmjølk 1 l | 45 kr (49 kr er vurdert) |
+| Heilmelk 1 l | 45 kr (49 kr er vurdert) |
 | Glasflaske | 20 kr |
 
-Ope: stykningsdelar enkeltvis (berre intervall avgjort, snitt 360 kr/kg).
+Ope: stykningsdelar enkeltvis (berre intervall avgjort, snitt 360 kr/kg). Stykningsdelane ligg i `PROD` med `kg: null`:
+kiloprisen blir sett på etikettstasjonen, og prisen står i koden. Nye varer må leggjast både i `PROD` og i `etikettar/produkt.js`.
+
+## Tal på varer i korga (18.11.2026)
+- Alle linjer har − og +. − på siste eksemplar fjernar linja.
+- Fastpris med pakkekode (kjøtkasser): + aukar talet. Same kode skanna to gonger gir òg ein til.
+- Vektvarer (kjøtdeig, stykningsdelar): kvar pakke har eiga vekt, pris og kode og ligg som eiga linje.
+  + opnar kameraet («Skann neste pakke»). Same pakke skanna to gonger blir avvist med forklaring.
+- Hyllevarer (egg, mjølk): + aukar talet. Mjølk går gjennom flaskedialogen.
+
+## Egg (18.11.2026)
+Egga står på brett utan lokk og har ingen etikett. Ein plakat over eggene (`etikettar/eggplakat.html`, A4 eller A3)
+har éin QR-kode per vare (hyllekode `F1.H.egg30`, `F1.H.egg12`). Prisane på plakaten kjem frå `etikettar/produkt.js`;
+`node etikettar/test/sjekk.js` kontrollerer at dei er like `PROD`.
 
 ## Flaskeordning (ikkje pant)
 - Kunden kjøper flaska éin gong (20 kr). Deretter byter han tom flaske mot full.
@@ -72,8 +86,9 @@ Skriv ut `#etikettar` på A4 og test med fleire telefonar (iPhone og Android).
 
 **Funksjon**
 - [ ] Vanleg kamera-app opnar butikken og legg vara i korga
-- [ ] Skannaren i sida les kodar på 20–40 cm avstand, også i dårleg lys
-- [ ] Same pakke to gonger → «ligg alt i korga»
+- [ ] Skannaren i sida les kodar på 20–40 cm avstand, også i dårleg lys (simulert 18.11: 10–35 cm for kjøt, 10–40 cm for mjølk; ekte telefonar står att)
+- [ ] Same vektpakke to gonger → «ligg alt i korga … skann kvar av dei» (testa i nettlesar 18.11)
+- [ ] Kjøtkasse: + og same kode to gonger gir 2 stk; kjøtdeig: + opnar kameraet (testa i nettlesar 18.11)
 - [ ] Betalt pakke skanna på nytt → «alt seld»
 - [ ] Endra kode → «Ukjend eller endra kode»
 - [ ] Mjølk: begge val i dialogen, +/- på mjølk og flaske, flaskelinja følgjer mjølka ned
@@ -82,10 +97,16 @@ Skriv ut `#etikettar` på A4 og test med fleire telefonar (iPhone og Android).
 - [ ] «Nullstill testdata» tømer alt
 
 **Visuelt**
-- [ ] Etikett lesbar på armlengds avstand, QR minst 25 mm
+- [ ] Etikett lesbar på armlengds avstand, QR minst 20–25 mm med 4 modular kvit sone (malane i `etikettar/`)
 - [ ] Utskrift på etikettskrivar (vakuumpose, kald og fuktig overflate)
+- [ ] Blekkskrivar: etikett på vakuumpose, 24 t i frysaren, ut i romtemperatur med kondens, gni på trykket. Les QR etterpå
+- [ ] Eggplakaten: skann begge kodane frå 40–60 cm
 - [ ] Botnlinja dekkjer ikkje innhald på liten skjerm
 - [ ] Dørplakaten forstått av nokon som ikkje har sett løysinga før
+
+## Skannar (18.11.2026)
+Kassa ber om HD-video og les eit utsnitt rundt ramma i full oppløysing (annankvar gong heile biletet).
+`BarcodeDetector` blir brukt der nettlesaren har han. Før: heile biletet nedskalert til 480 px, som gav om lag 10 cm rekkjevidd.
 
 ## Arbeidsflyt
 ```
