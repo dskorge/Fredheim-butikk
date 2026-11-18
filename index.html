@@ -420,10 +420,12 @@ body.skannar{overflow:hidden}
     $('#botn').hidden = tom;
     if (tom) return;
     $('#linjer').innerHTML = korg.map(function (l, i) {
-      // Alle varer har − og +. Vektvarer: + opnar kameraet (kvar pakke har si eiga vekt og eigen kode).
+      // Stk-varer (egg, mjølk, kasser, flaske) har − og +. Vektvarer har eigen kode per pakke og berre «Fjern».
       var n = l.n || 1;
-      var ctrl = '<div class="tal"><button data-minus="' + i + '" aria-label="' + (n === 1 ? 'Fjern' : 'Ein færre') + '">−</button><span>' + n + '</span>' +
-        '<button data-pluss="' + i + '" aria-label="' + (l.vekt ? 'Skann ein pakke til' : 'Ein til') + '">+</button></div>';
+      var ctrl = l.vekt
+        ? '<button class="fjern" data-fjern="' + i + '">Fjern</button>'
+        : '<div class="tal"><button data-minus="' + i + '" aria-label="' + (n === 1 ? 'Fjern' : 'Ein færre') + '">−</button><span>' + n + '</span>' +
+          '<button data-pluss="' + i + '" aria-label="Ein til">+</button></div>';
       return '<li' + (l.pantLinje ? ' class="pant"' : '') + '><div><b>' + esc(l.namn) + '</b><small>' + linjeMeta(l) + '</small>' + ctrl + '</div><span class="pris">' + kr(l.kr * (l.n || 1)) + '</span></li>';
     }).join('');
     var s = sum();
@@ -440,7 +442,6 @@ body.skannar{overflow:hidden}
     else if (d.pluss != null) {
       var lp = korg[+d.pluss];
       if (lp.pid === 'mjolk') leggTil(hylleKode('mjolk'));
-      else if (lp.vekt) { opneSkannar(); toast('Skann neste pakke ' + esc(lp.namn.toLowerCase()) + '. Kvar pakke har si eiga vekt og pris.'); }
       else { lp.n = (lp.n || 1) + 1; lagreKorg(); teikn(); }
     }
     else if (d.minus != null) {
@@ -493,13 +494,41 @@ body.skannar{overflow:hidden}
   var spor = null, harLys = false, lysPa = false, lysManuelt = false, morkeTeljar = 0;
   var lysC = document.createElement('canvas'), lysX = lysC.getContext('2d', { willReadFrequently: true });
   lysC.width = 48; lysC.height = 36;
-  function settLys(pa) {
+  function visLys(pa) {
+    lysPa = pa;
+    var b = $('#lys'); b.className = pa ? 'pa' : ''; b.setAttribute('aria-pressed', pa ? 'true' : 'false');
+    b.setAttribute('aria-label', pa ? 'Slå av lys' : 'Slå på lys');
+  }
+  function settLys(pa, manuelt) {
     if (!spor) return;
     spor.applyConstraints({ advanced: [{ torch: pa }] }).then(function () {
-      lysPa = pa;
-      var b = $('#lys'); b.className = pa ? 'pa' : ''; b.setAttribute('aria-pressed', pa ? 'true' : 'false');
-      b.setAttribute('aria-label', pa ? 'Slå av lys' : 'Slå på lys');
-    }).catch(function () { harLys = false; $('#lys').hidden = true; });
+      visLys(pa); harLys = true;
+    }).catch(function (e) {
+      if (pa && !provdAndre) { provdAndre = true; return byttTilLyskamera(manuelt); }
+      harLys = false;
+      if (manuelt) toast('Telefonen lèt ikkje nettsida slå på lyset (' + (e && e.name || 'ukjend') + '). Slå på taklyset.', true);
+    });
+  }
+  // Mange Android-telefonar har fleire bakkamera, og det første er ofte vidvinkel utan lys.
+  // Finn eit bakkamera som har lys, og byt til det.
+  var provdAndre = false;
+  function byttTilLyskamera(manuelt) {
+    if (!navigator.mediaDevices.enumerateDevices) return;
+    navigator.mediaDevices.enumerateDevices().then(function (l) {
+      var kam = l.filter(function (d) { return d.kind === 'videoinput' && d.deviceId !== (spor.getSettings ? spor.getSettings().deviceId : ''); });
+      (function prov(i) {
+        if (i >= kam.length) { if (manuelt) toast('Fann ikkje noko kamera med lys. Slå på taklyset.', true); return; }
+        navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: kam[i].deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }).then(function (s) {
+          var t = s.getVideoTracks()[0], fs = t.getSettings ? t.getSettings() : {};
+          if (fs.facingMode === 'user') { s.getTracks().forEach(function (x) { x.stop(); }); return prov(i + 1); }
+          t.applyConstraints({ advanced: [{ torch: true }] }).then(function () {
+            straum.getTracks().forEach(function (x) { x.stop(); });
+            straum = s; spor = t; $('#video').srcObject = s; $('#video').play();
+            harLys = true; visLys(true);
+          }).catch(function () { s.getTracks().forEach(function (x) { x.stop(); }); prov(i + 1); });
+        }).catch(function () { prov(i + 1); });
+      })(0);
+    });
   }
   function kanLys(t) {
     try { return typeof t.getCapabilities === 'function' && !!t.getCapabilities().torch; } catch (e) { return false; }
@@ -516,12 +545,12 @@ body.skannar{overflow:hidden}
     var mork = lysstyrke(v) < 70;
     morkeTeljar = mork ? morkeTeljar + 1 : 0;
     if (morkeTeljar === 8) {
-      if (harLys && !lysPa && !lysManuelt) settLys(true);
-      else if (!harLys) { var m = $('#morkt'); m.textContent = 'For mørkt? Slå på taklyset eller hald nærare.'; m.hidden = false; }
+      if (!lysPa && !lysManuelt) settLys(true);
+      if (!harLys) { var m = $('#morkt'); m.textContent = 'For mørkt? Slå på taklyset eller hald nærare.'; m.hidden = false; }
     }
     if (!mork) $('#morkt').hidden = true;
   }
-  $('#lys').addEventListener('click', function () { lysManuelt = true; settLys(!lysPa); });
+  $('#lys').addEventListener('click', function () { lysManuelt = true; settLys(!lysPa, true); });
   function treff(data) {
     var now = Date.now();
     if (sist[data] && now - sist[data] < 2500) return;
@@ -542,10 +571,12 @@ body.skannar{overflow:hidden}
   function opneSkannar() {
     $('#skannar').hidden = false; document.body.classList.add('skannar');
     $('#kamfeil').hidden = true; $('#lys').hidden = true; $('#morkt').hidden = true;
-    lysPa = false; lysManuelt = false; morkeTeljar = 0;
+    lysPa = false; lysManuelt = false; morkeTeljar = 0; provdAndre = false;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return kamFeil();
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }).then(function (s) {
-      straum = s; spor = s.getVideoTracks()[0]; harLys = kanLys(spor); $('#lys').hidden = !harLys;
+      straum = s; spor = s.getVideoTracks()[0]; harLys = kanLys(spor);
+      $('#lys').hidden = false; // vis alltid: nokre telefonar melder ikkje lysstøtte før kameraet er i gang
+      setTimeout(function () { if (spor && !harLys) harLys = kanLys(spor); }, 800);
       var v = $('#video'); v.srcObject = s; v.setAttribute('playsinline', ''); v.play();
       try { if ('BarcodeDetector' in window) detektor = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detektor = null; }
       var c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true }), opptatt = false;
