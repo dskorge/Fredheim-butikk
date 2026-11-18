@@ -256,9 +256,8 @@
           var t = s.getVideoTracks()[0], fs = t.getSettings ? t.getSettings() : {};
           if (fs.facingMode === 'user') { s.getTracks().forEach(function (x) { x.stop(); }); return prov(i + 1); }
           t.applyConstraints({ advanced: [{ torch: true }] }).then(function () {
-            straum.getTracks().forEach(function (x) { x.stop(); });
-            straum = s; spor = t; $('#video').srcObject = s; $('#video').play();
-            harLys = true; visLys(true);
+            brukStraum(s);
+            harLys = true; visLys(true); lagre('kam', kam[i].deviceId);
           }).catch(function () { s.getTracks().forEach(function (x) { x.stop(); }); prov(i + 1); });
         }).catch(function () { prov(i + 1); });
       })(0);
@@ -302,16 +301,57 @@
     x = Math.max(0, Math.min(x, vw - w)); y = Math.max(0, Math.min(y, vh - w));
     return { x: x, y: y, w: Math.min(w, vw, vh) };
   }
+  // Hovudkamera: telefonar med fleire linser gir ofte vidvinkel eller tele ved «environment».
+  // Etter første løyve les vi kameranamna, vel hovudkameraet og hugsar valet til neste gong.
+  function kamKrav(id) {
+    var v = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+    if (id) v.deviceId = { exact: id }; else v.facingMode = 'environment';
+    return { video: v, audio: false };
+  }
+  function hovudkamera(liste) {
+    var bak = liste.filter(function (d) {
+      return d.kind === 'videoinput' && d.label && !/front|user|framside|fremre|frontkamera|selfie|facetime/i.test(d.label);
+    });
+    if (!bak.length) return null;
+    var ikkjeHovud = /ultra|wide|vid|tele|zoom|dual|dobbel|triple|trippel|makro|macro|depth|dybde|\bir\b|infra/i;
+    function poeng(d) {
+      var m = d.label.match(/(\d+)(?!.*\d)/); // siste tal: «camera2 0, facing back» → 0
+      return (ikkjeHovud.test(d.label) ? 1000 : 0) + (m ? +m[1] : 50);
+    }
+    bak.sort(function (a, b) { return poeng(a) - poeng(b); });
+    return bak[0].deviceId;
+  }
+  function brukStraum(s) {
+    if (straum && straum !== s) straum.getTracks().forEach(function (t) { t.stop(); });
+    straum = s; spor = s.getVideoTracks()[0]; harLys = kanLys(spor);
+    var v = $('#video'); v.srcObject = s; v.setAttribute('playsinline', ''); var pl = v.play(); if (pl && pl.catch) pl.catch(function () {});
+    setTimeout(function () { if (spor && !harLys) harLys = kanLys(spor); }, 800);
+  }
+  function byttTilHovudkamera() {
+    if (!navigator.mediaDevices.enumerateDevices) return;
+    navigator.mediaDevices.enumerateDevices().then(function (l) {
+      var id = hovudkamera(l); if (!id || !spor) return;
+      var no = spor.getSettings ? spor.getSettings().deviceId : '';
+      if (id === no) { lagre('kam', id); return; }
+      navigator.mediaDevices.getUserMedia(kamKrav(id)).then(function (s) {
+        if (!straum) { s.getTracks().forEach(function (t) { t.stop(); }); return; } // skannaren vart lukka
+        brukStraum(s); lagre('kam', id);
+      }).catch(function () {});
+    }).catch(function () {});
+  }
   function opneSkannar() {
     $('#skannar').hidden = false; document.body.classList.add('skannar');
     $('#kamfeil').hidden = true; $('#lys').hidden = true; $('#morkt').hidden = true;
     lysPa = false; lysManuelt = false; morkeTeljar = 0; provdAndre = false;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return kamFeil();
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }).then(function (s) {
-      straum = s; spor = s.getVideoTracks()[0]; harLys = kanLys(spor);
+    var lagra = hent('kam', null);
+    navigator.mediaDevices.getUserMedia(kamKrav(lagra)).catch(function () {
+      lagra = null; return navigator.mediaDevices.getUserMedia(kamKrav(null));
+    }).then(function (s) {
+      brukStraum(s);
       $('#lys').hidden = false; // vis alltid: nokre telefonar melder ikkje lysstøtte før kameraet er i gang
-      setTimeout(function () { if (spor && !harLys) harLys = kanLys(spor); }, 800);
-      var v = $('#video'); v.srcObject = s; v.setAttribute('playsinline', ''); v.play();
+      if (!lagra) byttTilHovudkamera();
+      var v = $('#video');
       try { if ('BarcodeDetector' in window) detektor = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detektor = null; }
       var c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true }), opptatt = false;
       loop = setInterval(function () {

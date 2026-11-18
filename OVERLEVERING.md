@@ -70,6 +70,31 @@ QR-en inneheld ein URL: `<butikk-adresse>#v=<kode>`. Vanleg mobilkamera opnar d�
 
 **Prototypen brukar ein enkel sjekksum som kven som helst kan rekne ut. Han er ikkje tryggleik.**
 
+## Varelager (plan, ikkje bygd)
+Lager og etikettar er same system: ein vektpakke blir til i databasen i det etiketten blir skriven ut.
+
+**Vektvarer (kjøt)** – éin rad per pakke: pakke-ID, produkt, gram, kr, kilopris, pakkedato, best før, parti, Nortura-referanse, status (`lager` → `reservert` → `seld`, eller `uttak`/`svinn`).
+
+**Mottak frå Nortura** – ferdig vakuumerte stykningsdelar med Nortura-lapp:
+1. Registrer leveransen éin gong: referansenummer, slakteri (godkj.nr.), skjeringsanlegg (godkj.nr.), slaktedato. Gjeld alle pakkane i leveransen.
+2. Per pakke: skann Nortura-strekkoden (GS1-128 gir truleg vekt, dato og parti – må stadfestast med bilete av ein ekte lapp) eller vekt på vekta. Vel produkt.
+3. Skriv ut eigen etikett og lim han over. Nortura-partiet blir lagra saman med vår pakke-ID for sporing.
+
+**Krav til eigen kjøtetikett (ferskt storfe, forordning 1760/2000 art. 13 via forskrift 2010-07-09-1131)** – ovalt ID-merke/EFTA-nummer åleine er ikkje nok:
+- Referansenummer (koplar kjøtet til dyret/partiet)
+- «Slaktet i: Norge (godkjenningsnummer)»
+- «Nedskåret i: Norge (godkjenningsnummer)»
+- «Opprinnelse: Norge» (erstattar født/oppdrettet/slaktet når alt er i Noreg)
+- Kverna kjøt (kjøtdeig): referansenummer, «Slaktet i» og «Kvernet i»
+- I tillegg dei vanlege krava: namn, vekt, pris, best før/siste forbruksdag, oppbevaring, produsent
+`etikettar/maler.js` har allereie felta (Opphav, Slakta i, Skore i, Ref.nr.). Teksten bør vurderast mot ordlyden over.
+
+**Stk-varer (egg, mjølk, kasser)** – ingen etikett per eining. Talt per produkt og parti:
+- Egg: vegg-skilt med hyllekode (`etikettar/eggplakat.html`). Inn på lager via ein knapp «+ brett» på lagersida (tal brett, dato lagt/pakka). Sal trekkjer frå.
+- Mjølk: «+ flasker» ved tapping. Glasflasker: eiga teljing (ut ved sal, inn ved byte) så ein ser kor mange som er ute hos kundar.
+
+**Lagersida** (mobil, berre for oss): beholdning per produkt (stk, kg, eldste best før), knappar for innlegging av stk-varer, «uttak/svinn» per pakke ved skanning. Varsel i Home Assistant når best før nærmar seg.
+
 ## Krav til den ekte versjonen (med Vipps)
 1. **Serveren eig prisen.** QR-en skal berre innehalde ein tilfeldig pakke-ID (minst 64 bit) og ein HMAC-signatur. Vekt, pris og produkt blir slått opp i databasen.
 2. **Serveren lagar Vipps-betalinga** (ePayment API) med beløpet frå databasen. Nettlesaren sender berre lista med pakke-ID-ar.
@@ -89,6 +114,7 @@ Skriv ut `#etikettar` på A4 og test med fleire telefonar (iPhone og Android).
 - [ ] Skannaren i sida les kodar på 20–40 cm avstand, også i dårleg lys (simulert 18.11: 10–35 cm for kjøt, 10–40 cm for mjølk; ekte telefonar står att)
 - [ ] Lys: slår seg på av seg sjølv etter ca. 1,5 s i mørker (Android Chrome, iPhone iOS 17+), lysknappen slår av/på, og lyset slår seg ikkje på att etter at kunden har slått det av (testa med simulert kamera 18.11)
 - [ ] Telefon utan lysstøtte: tipset «For mørkt?» kjem fram
+- [ ] Hovudkameraet blir valt (ikkje vidvinkel/tele), og valet blir hugsa til neste gong (testa med simulerte kameranamn for iPhone, Android og norsk iOS 18.11)
 - [ ] Lysknappen er alltid synleg. Melder kameraet at lys ikkje går, prøver sida dei andre bakkamera (Android med fleire linser)
 - [ ] Lys og blank vakuumpose: gjenskin hindrar ikkje lesing (matt etikett)
 - [ ] Same vektpakke to gonger → «ligg alt i korga … skann kvar av dei» (testa i nettlesar 18.11)
