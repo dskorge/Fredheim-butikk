@@ -58,6 +58,8 @@ main{padding:0 var(--g)}
 .tal{display:flex;align-items:center;gap:4px;margin-top:6px}
 .tal button{width:36px;height:36px;border:1.5px solid var(--ink);background:var(--lift);font-size:1.2rem;line-height:1}
 .tal span{min-width:2rem;text-align:center;font-weight:600}
+#linjer li.pant b{font-size:1.05rem;font-family:var(--body,inherit)}
+#linjer li.pant{color:var(--stone)}
 .legg{margin-top:18px}
 
 #botn{position:fixed;left:0;right:0;bottom:0;background:var(--lift);border-top:2px solid var(--ink);padding:14px var(--g) calc(14px + env(safe-area-inset-bottom))}
@@ -177,7 +179,7 @@ body.skannar{overflow:hidden}
   <section id="takk" hidden>
     <p class="caps" style="color:var(--ok)">Betalt</p>
     <h1 style="margin-top:10px">Takk for handelen!</h1>
-    <p class="lead">Kvitteringa ligg òg i Vipps-appen. Ha ein fin tur vidare.</p>
+    <p class="lead">Kvitteringa ligg òg i Vipps-appen. Ha ein fin dag vidare.</p>
     <div class="kv">
       <p class="caps">Kvittering · Fredheim gard</p>
       <p id="ordre"></p>
@@ -229,6 +231,15 @@ body.skannar{overflow:hidden}
     <h3>Her opnar Vipps-appen</h3>
     <p>I den ferdige løysinga blir du send til Vipps for å godkjenne beløpet. No blir ingen pengar trekte.</p>
     <div class="rad"><button class="btn solid" id="godkjenn" type="button">Simuler godkjent betaling</button><button class="btn" id="avbryt" type="button">Avbryt</button></div>
+  </div>
+</dialog>
+
+<dialog id="pantDlg" aria-labelledby="pantTittel">
+  <div class="dl">
+    <p class="caps" style="color:var(--red)">Heilmjølk 1 l</p>
+    <h3 id="pantTittel" style="margin-top:6px">Har du med tom flaske å byte?</h3>
+    <p id="pantTekst"></p>
+    <div class="rad"><button class="btn solid" id="utanPant" type="button">Ja, eg byter flaske</button><button class="btn" id="medPant" type="button">Ny flaske</button></div>
   </div>
 </dialog>
 
