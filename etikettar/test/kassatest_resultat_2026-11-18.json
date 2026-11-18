@@ -1,0 +1,296 @@
+[
+ {
+  "etikett": "kjot",
+  "cm": 10,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Mørbrad 1,035 kg lagt i korga · 1 vare ·"
+ },
+ {
+  "etikett": "kjot",
+  "cm": 10,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kjot",
+  "cm": 15,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Mørbrad 1,035 kg lagt i korga · 1 vare ·"
+ },
+ {
+  "etikett": "kjot",
+  "cm": 15,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kjot",
+  "cm": 20,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Mørbrad 1,035 kg lagt i korga · 1 vare ·"
+ },
+ {
+  "etikett": "kjot",
+  "cm": 20,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kjot",
+  "cm": 25,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Mørbrad 1,035 kg lagt i korga · 1 vare ·"
+ },
+ {
+  "etikett": "kjot",
+  "cm": 25,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kjot",
+  "cm": 30,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Mørbrad 1,035 kg lagt i korga · 1 vare ·"
+ },
+ {
+  "etikett": "kjot",
+  "cm": 30,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kjot",
+  "cm": 35,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Mørbrad 1,035 kg lagt i korga · 1 vare ·"
+ },
+ {
+  "etikett": "kjot",
+  "cm": 35,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kjot",
+  "cm": 40,
+  "kassa": "ny kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kjot",
+  "cm": 40,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 10,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 10,
+  "kassa": "gamal kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 15,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 15,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 20,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 20,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 25,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 25,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 30,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 30,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 35,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 35,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 40,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": ""
+ },
+ {
+  "etikett": "mjolk",
+  "cm": 40,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kasse",
+  "cm": 10,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Familiekasse lagt i korga · 1 vare · 2 8"
+ },
+ {
+  "etikett": "kasse",
+  "cm": 10,
+  "kassa": "gamal kassa",
+  "ok": true,
+  "toast": "Familiekasse lagt i korga · 1 vare · 2 8"
+ },
+ {
+  "etikett": "kasse",
+  "cm": 15,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Familiekasse lagt i korga · 1 vare · 2 8"
+ },
+ {
+  "etikett": "kasse",
+  "cm": 15,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kasse",
+  "cm": 20,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Familiekasse lagt i korga · 1 vare · 2 8"
+ },
+ {
+  "etikett": "kasse",
+  "cm": 20,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kasse",
+  "cm": 25,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Familiekasse lagt i korga · 1 vare · 2 8"
+ },
+ {
+  "etikett": "kasse",
+  "cm": 25,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kasse",
+  "cm": 30,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Familiekasse lagt i korga · 1 vare · 2 8"
+ },
+ {
+  "etikett": "kasse",
+  "cm": 30,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kasse",
+  "cm": 35,
+  "kassa": "ny kassa",
+  "ok": true,
+  "toast": "Familiekasse lagt i korga · 1 vare · 2 8"
+ },
+ {
+  "etikett": "kasse",
+  "cm": 35,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kasse",
+  "cm": 40,
+  "kassa": "ny kassa",
+  "ok": false,
+  "toast": ""
+ },
+ {
+  "etikett": "kasse",
+  "cm": 40,
+  "kassa": "gamal kassa",
+  "ok": false,
+  "toast": ""
+ }
+]

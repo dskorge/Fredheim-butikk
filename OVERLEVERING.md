@@ -15,6 +15,7 @@ Les denne fila før du endrar noko. Alt du treng for å halde fram, ligg i dette
 | `src/qr.min.js` | qrcode-generator (MIT) – lagar QR på etikettane |
 | `src/jsqr.min.js` | jsQR (Apache-2.0) – les QR frå kameraet |
 | `build.py` | Set saman `index.html` |
+| `etikettar/` | Etikettmalar, etikettstasjon (vekt → ZPL), eggark og testar. Sjå `etikettar/README.md` |
 
 Språk i butikken: nynorsk. Fargar og skrift frå Fredheim-profilen (Fraunces + Instrument Sans). Vipps-knapp `#FF5B24`.
 
@@ -28,10 +29,11 @@ Språk i butikken: nynorsk. Fargar og skrift frå Fredheim-profilen (Fraunces + 
 | Halv kasse | 1 490 kr |
 | Kjøtdeigpakke 5 kg | 1 090 kr |
 | Helgepakke ca. 2 kg | 990 kr |
-| Heilmjølk 1 l | 45 kr (49 kr er vurdert) |
+| Heilmelk 1 l | 45 kr (49 kr er vurdert) |
 | Glasflaske | 20 kr |
 
-Ope: stykningsdelar enkeltvis (berre intervall avgjort, snitt 360 kr/kg).
+Ope: stykningsdelar enkeltvis (berre intervall avgjort, snitt 360 kr/kg). Stykningsdelane ligg i `PROD` med `kg: null`:
+kiloprisen blir sett på etikettstasjonen, og prisen står i koden. Nye varer må leggjast både i `PROD` og i `etikettar/produkt.js`.
 
 ## Flaskeordning (ikkje pant)
 - Kunden kjøper flaska éin gong (20 kr). Deretter byter han tom flaske mot full.
@@ -72,7 +74,7 @@ Skriv ut `#etikettar` på A4 og test med fleire telefonar (iPhone og Android).
 
 **Funksjon**
 - [ ] Vanleg kamera-app opnar butikken og legg vara i korga
-- [ ] Skannaren i sida les kodar på 20–40 cm avstand, også i dårleg lys
+- [ ] Skannaren i sida les kodar på 20–40 cm avstand, også i dårleg lys (simulert 18.11: 10–35 cm for kjøt, 10–40 cm for mjølk; ekte telefonar står att)
 - [ ] Same pakke to gonger → «ligg alt i korga»
 - [ ] Betalt pakke skanna på nytt → «alt seld»
 - [ ] Endra kode → «Ukjend eller endra kode»
@@ -82,10 +84,14 @@ Skriv ut `#etikettar` på A4 og test med fleire telefonar (iPhone og Android).
 - [ ] «Nullstill testdata» tømer alt
 
 **Visuelt**
-- [ ] Etikett lesbar på armlengds avstand, QR minst 25 mm
+- [ ] Etikett lesbar på armlengds avstand, QR minst 20–25 mm med 4 modular kvit sone (malane i `etikettar/`)
 - [ ] Utskrift på etikettskrivar (vakuumpose, kald og fuktig overflate)
 - [ ] Botnlinja dekkjer ikkje innhald på liten skjerm
 - [ ] Dørplakaten forstått av nokon som ikkje har sett løysinga før
+
+## Skannar (18.11.2026)
+Kassa ber om HD-video og les eit utsnitt rundt ramma i full oppløysing (annankvar gong heile biletet).
+`BarcodeDetector` blir brukt der nettlesaren har han. Før: heile biletet nedskalert til 480 px, som gav om lag 10 cm rekkjevidd.
 
 ## Arbeidsflyt
 ```

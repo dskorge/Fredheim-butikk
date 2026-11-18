@@ -198,6 +198,7 @@ body.skannar{overflow:hidden}
     <div class="et-hode">
       <h1>Testetikettar</h1>
       <p>Skriv ut og klipp ut. Skann koden med vanleg mobilkamera eller med skannaren i butikk-sida. Kvar pakke har si eiga kode, så same pakke kan berre seljast éin gong.</p>
+      <p>Ferdige etikettmalar (kjøt, kjøtkasse, mjølk, egg): <a href="etikettar/testark.html">testark</a> · <a href="etikettar/egg.html">eggetikettar på A4</a> · <a href="etikettar/skrivar.html">etikettstasjonen</a>.</p>
       <p style="font-size:.85rem">Utskrift og kamera verkar først når sida ligg på eigen nettstad. I Claude-visinga kan du prøve utsjånaden med «Testvarer».</p>
       <div class="rad"><button class="btn solid" id="skriv" type="button">Skriv ut</button><a class="btn" href="#butikk">Til butikken</a><button class="btn" id="nullstill" type="button">Nullstill testdata</button></div>
     </div>
@@ -236,7 +237,7 @@ body.skannar{overflow:hidden}
 
 <dialog id="pantDlg" aria-labelledby="pantTittel">
   <div class="dl">
-    <p class="caps" style="color:var(--red)">Heilmjølk 1 l</p>
+    <p class="caps" style="color:var(--red)">Heilmelk 1 l</p>
     <h3 id="pantTittel" style="margin-top:6px">Har du med tom flaske å byte?</h3>
     <p id="pantTekst"></p>
     <div class="rad"><button class="btn solid" id="utanPant" type="button">Ja, eg byter flaske</button><button class="btn" id="medPant" type="button">Ny flaske</button></div>
@@ -269,8 +270,21 @@ body.skannar{overflow:hidden}
     helg:      { namn: 'Helgepakke',     pris: 990,  tekst: 'ca. 2 kg · biff, entrecôte, ytrefilet' },
     egg12:     { namn: 'Egg, 12 stk',    pris: 65,   tekst: 'Frå eigne høner' },
     egg30:     { namn: 'Egg, brett 30',  pris: 150,  tekst: 'Frå eigne høner' },
-    mjolk:     { namn: 'Heilmjølk 1 l',  pris: 45,   tekst: 'Pasteurisert, tappa på garden', pant: true }
+    mjolk:     { namn: 'Heilmelk 1 l',   pris: 45,   tekst: 'Pasteurisert, tappa på garden', pant: true },
+    // Stykningsdelar (laus vekt). Kiloprisen blir sett på etikettskrivaren og ligg i koden (kr), så kg er null her.
+    morbrad:   { namn: 'Mørbrad',        kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    ytrefilet: { namn: 'Ytrefilet',      kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    entrecote: { namn: 'Entrecôte',      kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    flatbiff:  { namn: 'Flatbiff',       kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    rundstek:  { namn: 'Rundstek',       kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    hogrygg:   { namn: 'Høgrygg',        kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    bogstek:   { namn: 'Bogstek',        kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    grytekjot: { namn: 'Grytekjøt',      kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    karbonade: { namn: 'Karbonadedeig',  kg: null, vekt: true, tekst: 'Storfe frå garden' },
+    suppekjot: { namn: 'Suppekjøt',      kg: null, vekt: true, tekst: 'Storfe frå garden' }
   };
+  // Kilopris frå PROD. For stykningsdelar står kiloprisen berre på etiketten (koden har vekt og pris, ikkje kilopris).
+  function kgPris(p) { return p.kg != null ? p.kg : null; }
   var HYLLE = ['egg12', 'egg30', 'mjolk'];
   // Demo-pakkar (det vekta og etikettskrivaren lagar i den ferdige løysinga)
   var PAKKAR = [
@@ -304,7 +318,7 @@ body.skannar{overflow:hidden}
     var sig = d.pop(); if (sjekk(d.join('.')) !== sig) return { feil: 'Ukjend eller endra kode' };
     if (d[1] === 'H') { var hp = PROD[d[2]]; if (!hp) return null; return { hylle: true, pid: d[2], namn: hp.namn, kr: hp.pris, pant: !!hp.pant }; }
     var p = PROD[d[2]]; if (!p) return null;
-    return { id: d[1], pid: d[2], namn: p.namn, g: +d[3], kr: +d[4], kg: p.kg, vekt: !!p.vekt, tekst: p.tekst, dato: d[5], parti: d[6] };
+    return { id: d[1], pid: d[2], namn: p.namn, g: +d[3], kr: +d[4], kg: kgPris(p), vekt: !!p.vekt, tekst: p.tekst, dato: d[5], parti: d[6] };
   }
 
   // ---------- Lagring ----------
@@ -317,6 +331,7 @@ body.skannar{overflow:hidden}
 
   // ---------- Hjelparar ----------
   function kr(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' kr'; }
+  function krDes(n) { var t = Number.isInteger(n) ? String(n) : n.toFixed(2); var d = t.split('.'); return d[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (d[1] ? ',' + d[1] : '') + ' kr'; }
   function vekt(g) { return (g / 1000).toFixed(3).replace('.', ',') + ' kg'; }
   function dato(d) { return d.slice(0, 2) + '.' + d.slice(2, 4) + '.20' + d.slice(4); }
   function $(s) { return document.querySelector(s); }
@@ -383,7 +398,7 @@ body.skannar{overflow:hidden}
   function linjeMeta(l) {
     if (l.pantLinje) return kr(l.kr) + ' per flaske · neste gong byter du tom mot full';
     if (l.hylle) return kr(l.kr) + ' per stk';
-    if (l.vekt) return vekt(l.g) + ' · ' + kr(l.kg) + '/kg';
+    if (l.vekt) return vekt(l.g) + (l.kg != null ? ' · ' + krDes(l.kg) + '/kg' : '');
     return esc(l.tekst || '');
   }
   function teikn() {
@@ -450,27 +465,54 @@ body.skannar{overflow:hidden}
   }
 
   // ---------- Skannar ----------
-  var straum = null, loop = null, sist = {};
+  // Les kodar på 20–40 cm: be om HD-video, les eit utsnitt rundt ramma i full oppløysing
+  // (og annankvar gong heile biletet nedskalert). Brukar BarcodeDetector der nettlesaren har det.
+  var straum = null, loop = null, sist = {}, rundar = 0, detektor = null;
+  function treff(data) {
+    var now = Date.now();
+    if (sist[data] && now - sist[data] < 2500) return;
+    sist[data] = now;
+    var ok = leggTil(data);
+    var ram = $('#ram'); ram.className = ok ? 'ok' : 'nei'; setTimeout(function () { ram.className = ''; }, 600);
+  }
+  function rammeUtsnitt(v) {
+    // Kvar ramma ligg i videobiletet (video er object-fit: cover over heile skjermen).
+    var vw = v.videoWidth, vh = v.videoHeight, sw = window.innerWidth, sh = window.innerHeight;
+    var s = Math.max(sw / vw, sh / vh), ox = (vw * s - sw) / 2, oy = (vh * s - sh) / 2;
+    var r = $('#ram').getBoundingClientRect();
+    var pad = r.width * 0.35; // litt rom utanfor ramma
+    var x = (r.left - pad + ox) / s, y = (r.top - pad + oy) / s, w = (r.width + 2 * pad) / s;
+    x = Math.max(0, Math.min(x, vw - w)); y = Math.max(0, Math.min(y, vh - w));
+    return { x: x, y: y, w: Math.min(w, vw, vh) };
+  }
   function opneSkannar() {
     $('#skannar').hidden = false; document.body.classList.add('skannar');
     $('#kamfeil').hidden = true;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return kamFeil();
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(function (s) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }).then(function (s) {
       straum = s; var v = $('#video'); v.srcObject = s; v.setAttribute('playsinline', ''); v.play();
-      var c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true });
+      try { if ('BarcodeDetector' in window) detektor = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detektor = null; }
+      var c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true }), opptatt = false;
       loop = setInterval(function () {
-        if (v.readyState < 2 || ventarPaPant) return;
-        var w = 480, h = Math.round(v.videoHeight / v.videoWidth * w) || 360;
-        c.width = w; c.height = h; x.drawImage(v, 0, 0, w, h);
-        var r = window.jsQR(x.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
-        if (r && r.data) {
-          var now = Date.now();
-          if (sist[r.data] && now - sist[r.data] < 2500) return;
-          sist[r.data] = now;
-          var ok = leggTil(r.data);
-          var ram = $('#ram'); ram.className = ok ? 'ok' : 'nei'; setTimeout(function () { ram.className = ''; }, 600);
+        if (v.readyState < 2 || ventarPaPant || opptatt) return;
+        rundar++;
+        if (detektor) {
+          opptatt = true;
+          detektor.detect(v).then(function (r) { opptatt = false; if (r && r.length) treff(r[0].rawValue); })
+            .catch(function () { opptatt = false; detektor = null; });
+          return;
         }
-      }, 220);
+        var w, h;
+        if (rundar % 2) { // utsnitt rundt ramma i full oppløysing (maks 800 px)
+          var u = rammeUtsnitt(v); w = h = Math.min(800, Math.round(u.w));
+          c.width = w; c.height = h; x.drawImage(v, u.x, u.y, u.w, u.w, 0, 0, w, h);
+        } else { // heile biletet, nedskalert
+          w = 640; h = Math.round(v.videoHeight / v.videoWidth * w) || 480;
+          c.width = w; c.height = h; x.drawImage(v, 0, 0, w, h);
+        }
+        var r = window.jsQR(x.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+        if (r && r.data) treff(r.data);
+      }, 180);
     }).catch(kamFeil);
   }
   function kamFeil() { $('#kamfeil').hidden = false; }
