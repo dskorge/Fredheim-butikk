@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3ECDB">
+<title>Gardsbutikken – Fredheim gard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Instrument+Sans:wght@400..700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --ink:#5C4433; --paper:#F3ECDB; --lift:#FBF7EC; --red:#A44A2A; --sand:#CDB89C; --stone:#6B5E53;
+  --rule:rgba(92,68,51,.22); --ok:#3F6B3A; --vipps:#FF5B24;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
+  --g:clamp(18px,5vw,40px);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.08;margin:0;letter-spacing:-.01em;text-wrap:balance}
+p{margin:0}
+.caps{font-size:.72rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;padding:12px 18px;border:2px solid var(--ink);background:transparent;font-weight:600;text-decoration:none;color:var(--ink)}
+.btn.solid{background:var(--ink);color:var(--lift)}
+.btn.vipps{background:var(--vipps);border-color:var(--vipps);color:#fff;font-size:1.08rem}
+.test{background:var(--ink);color:var(--paper);font-size:.8rem;padding:6px var(--g);display:flex;justify-content:space-between;gap:12px;align-items:center}
+.test button{background:none;border:0;color:var(--sand);text-decoration:underline;padding:4px 0;font-size:.8rem}
+
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:18px var(--g) 14px;border-bottom:1px solid var(--rule)}
+header .logo svg{width:132px;height:auto;display:block}
+header .caps{color:var(--red);padding-bottom:4px}
+main{padding:0 var(--g)}
+#korg,#takk{max-width:560px;margin:0 auto}
+
+/* tom korg */
+#tom{padding:34px 0 40px}
+#tom h1{font-size:clamp(2.1rem,9vw,2.8rem)}
+#tom h1 em{font-style:normal;color:var(--red)}
+#tom .lead{margin-top:14px;color:var(--stone);max-width:34ch}
+.steg{list-style:none;margin:28px 0;padding:0;border-top:2px solid var(--ink);counter-reset:s}
+.steg li{counter-increment:s;display:grid;grid-template-columns:2.2rem 1fr;gap:6px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.steg li::before{content:counter(s);font-family:var(--display);font-weight:600;font-size:1.7rem;line-height:1;color:var(--red)}
+.steg b{display:block}
+
+/* korg */
+#fylt{padding:24px 0 190px}
+.korg-hode{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.korg-hode h2{font-size:1.9rem}
+#linjer{list-style:none;margin:0;padding:0}
+#linjer li{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--rule)}
+#linjer b{font-family:var(--display);font-weight:600;font-size:1.25rem;display:block}
+#linjer small{display:block;color:var(--stone);font-size:.92rem}
+.pris{font-family:var(--display);font-weight:600;font-size:1.25rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.fjern{background:none;border:0;padding:6px 0 0;color:var(--red);font-size:.88rem;text-decoration:underline}
+.tal{display:flex;align-items:center;gap:4px;margin-top:6px}
+.tal button{width:36px;height:36px;border:1.5px solid var(--ink);background:var(--lift);font-size:1.2rem;line-height:1}
+.tal span{min-width:2rem;text-align:center;font-weight:600}
+.legg{margin-top:18px}
+
+#botn{position:fixed;left:0;right:0;bottom:0;background:var(--lift);border-top:2px solid var(--ink);padding:14px var(--g) calc(14px + env(safe-area-inset-bottom))}
+#botn .inn{max-width:560px;margin:0 auto}
+.sumrad{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--display);font-weight:600;font-size:1.5rem}
+#mva{font-size:.82rem;color:var(--stone);margin:2px 0 10px}
+
+/* takk */
+#takk{padding:34px 0 60px}
+#takk h1{font-size:clamp(2.2rem,9vw,2.9rem)}
+#takk .lead{margin-top:12px;color:var(--stone)}
+.kv{margin:26px 0;background:var(--lift);border:1px solid var(--rule);padding:18px}
+.kv table{width:100%;border-collapse:collapse;margin-top:10px}
+.kv td{padding:8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.kv td:last-child{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.kv small{display:block;color:var(--stone);font-size:.82rem}
+.kv tfoot td{border:0;font-weight:600}
+.kv tfoot tr:first-child td{font-family:var(--display);font-size:1.3rem;padding-top:12px}
+#ordre{color:var(--stone);font-size:.85rem}
+
+/* skannar */
+#skannar{position:fixed;inset:0;background:#120d09;z-index:20;display:flex;flex-direction:column}
+#skannar[hidden]{display:none}
+#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sk-topp{position:relative;z-index:2;padding:16px var(--g);color:var(--paper);background:linear-gradient(#120d09cc,transparent)}
+.sk-topp h2{font-size:1.5rem}
+#ram{position:absolute;left:50%;top:44%;width:min(66vw,280px);aspect-ratio:1;transform:translate(-50%,-50%);border:3px solid rgba(243,236,219,.85);border-radius:6px;box-shadow:0 0 0 100vmax rgba(18,13,9,.35);transition:border-color .15s}
+#ram.ok{border-color:#7FD06F}
+#ram.nei{border-color:#E8735A}
+.sk-botn{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:16px var(--g) calc(18px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#120d09ee 30%)}
+.sk-botn .btn{border-color:var(--paper);color:var(--paper)}
+.sk-botn .btn.solid{background:var(--paper);color:var(--ink)}
+.sk-botn .rad{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#kamfeil{position:relative;z-index:2;margin:20vh var(--g) 0;background:var(--lift);padding:20px;color:var(--ink)}
+#kamfeil h3{font-size:1.3rem;margin-bottom:6px}
+
+#toast{position:fixed;left:50%;top:14px;transform:translate(-50%,calc(-100% - 40px));z-index:40;background:var(--ok);color:#fff;padding:12px 16px;max-width:calc(100% - 28px);width:max-content;font-size:.95rem;transition:transform .25s;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+#toast.on{transform:translate(-50%,0)}
+#toast.feil{background:var(--red)}
+
+/* dialogar */
+dialog{border:0;padding:0;max-width:440px;width:calc(100% - 28px);background:var(--lift);color:var(--ink)}
+dialog::backdrop{background:rgba(18,13,9,.55)}
+.dl{padding:22px}
+.dl h3{font-size:1.4rem}
+.dl p{margin:10px 0 18px;color:var(--stone)}
+.dl .rad{display:grid;gap:10px}
+.testmerke{display:inline-block;background:var(--ink);color:var(--paper);font-size:.7rem;padding:3px 8px;margin-bottom:10px}
+#testliste{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px}
+#testliste .btn{justify-content:space-between;min-height:48px;font-weight:500}
+
+/* etikettar */
+#etikettar{padding:24px 0 60px}
+.et-hode{max-width:900px;margin:0 auto 22px}
+.et-hode h1{font-size:2rem}
+.et-hode p{color:var(--stone);margin:8px 0 14px;max-width:60ch}
+.et-hode .rad{display:flex;gap:10px;flex-wrap:wrap}
+.et-hode .btn{width:auto}
+#ark{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;max-width:900px;margin:0 auto}
+.etikett{background:#fff;color:#2b1f17;border:1px solid #cdbfa9;padding:12px 14px;break-inside:avoid}
+.et-topp{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e3d8c6;padding-bottom:6px}
+.et-topp svg{width:74px;height:auto}
+.et-topp .caps{font-size:.58rem;color:var(--stone)}
+.etikett h3{font-size:1.45rem;margin-top:8px}
+.et-tekst{font-size:.8rem;color:var(--stone)}
+.et-midt{display:grid;grid-template-columns:1fr 100px;gap:12px;align-items:end;margin-top:8px}
+.et-midt .et-pris{font-family:var(--display);font-weight:700;font-size:1.9rem;line-height:1}
+.et-midt p{font-size:.85rem}
+.et-sm{font-size:.7rem !important;color:var(--stone);margin-top:6px;line-height:1.35}
+.et-qr{text-align:center}
+.et-qr svg{width:100px;height:100px;display:block}
+.et-qr span{display:block;margin-top:4px;white-space:nowrap;font-size:.55rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.doer{max-width:900px;margin:22px auto 0;background:#fff;border:1px solid #cdbfa9;padding:24px;display:grid;grid-template-columns:1fr 180px;gap:20px;align-items:center;break-inside:avoid}
+.doer h2{font-size:2rem}
+.doer p{margin-top:8px;color:var(--stone)}
+#doer-qr svg{width:180px;height:180px;display:block}
+
+@media print{
+  body{background:#fff}
+  .test,header,.et-hode,#botn,#toast{display:none !important}
+  #etikettar{padding:0}
+  #ark{grid-template-columns:repeat(2,1fr);gap:4mm;max-width:none}
+  .etikett{border:1px dashed #999}
+}
+body.skannar{overflow:hidden}
+</style>
+</head>
+<body>
+<div class="test"><span>Testmodus: ingen betaling blir gjennomført.</span><span><button id="opneTest" type="button">Testvarer</button> · <a href="#etikettar" style="color:var(--sand)">Etikettar</a></span></div>
+
+<header>
+  <a class="logo" id="logo-src" href="#butikk" aria-label="Fredheim gard">__LOGO__</a>
+  <span class="caps">Gardsbutikken</span>
+</header>
+
+<main>
+  <section id="korg">
+    <div id="tom">
+      <p class="caps" style="color:var(--red)">Sjølvbetent · opent 08–22</p>
+      <h1 style="margin-top:12px">Velkomen til <em>gardsbutikken</em></h1>
+      <p class="lead">Skann varene du tek med mobilkameraet. Betal med Vipps når du er ferdig.</p>
+      <ol class="steg">
+        <li><div><b>Skann koden på vara</b>Med kameraet eller knappen under. Vara hamnar i korga.</div></li>
+        <li><div><b>Skann neste vare</b>Alt du skannar, blir liggjande i same korg.</div></li>
+        <li><div><b>Betal med Vipps</b>Kvitteringa får du i Vipps.</div></li>
+      </ol>
+      <button class="btn solid" id="skann" type="button">Skann vare</button>
+    </div>
+
+    <div id="fylt" hidden>
+      <div class="korg-hode"><h2>Handlekorga</h2><span id="tal" class="caps"></span></div>
+      <ul id="linjer"></ul>
+      <button class="btn legg" id="skann2" type="button">+ Skann fleire varer</button>
+    </div>
+  </section>
+
+  <section id="takk" hidden>
+    <p class="caps" style="color:var(--ok)">Betalt</p>
+    <h1 style="margin-top:10px">Takk for handelen!</h1>
+    <p class="lead">Kvitteringa ligg òg i Vipps-appen. Ha ein fin tur vidare.</p>
+    <div class="kv">
+      <p class="caps">Kvittering · Fredheim gard</p>
+      <p id="ordre"></p>
+      <table>
+        <tbody id="kvlinjer"></tbody>
+        <tfoot>
+          <tr><td>Sum</td><td id="kvsum"></td></tr>
+          <tr><td style="font-weight:400;color:var(--stone)">Herav mva. 15 %</td><td id="kvmva" style="font-weight:400;color:var(--stone)"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <button class="btn" id="nyHandel" type="button">Ny handel</button>
+  </section>
+
+  <section id="etikettar" hidden>
+    <div class="et-hode">
+      <h1>Testetikettar</h1>
+      <p>Skriv ut og klipp ut. Skann koden med vanleg mobilkamera eller med skannaren i butikk-sida. Kvar pakke har si eiga kode, så same pakke kan berre seljast éin gong.</p>
+      <p style="font-size:.85rem">Utskrift og kamera verkar først når sida ligg på eigen nettstad. I Claude-visinga kan du prøve utsjånaden med «Testvarer».</p>
+      <div class="rad"><button class="btn solid" id="skriv" type="button">Skriv ut</button><a class="btn" href="#butikk">Til butikken</a><button class="btn" id="nullstill" type="button">Nullstill testdata</button></div>
+    </div>
+    <div id="ark"></div>
+    <div class="doer">
+      <div><p class="caps" style="color:var(--red)">Til døra</p><h2>Velkomen inn!</h2><p>Skann koden for å starte handelen. Du treng ingen app for å skanne, berre Vipps for å betale.</p></div>
+      <div id="doer-qr"></div>
+    </div>
+  </section>
+</main>
+
+<div id="botn" hidden><div class="inn">
+  <div class="sumrad"><span>Sum</span><span id="sum"></span></div>
+  <p id="mva"></p>
+  <button class="btn vipps" id="betal" type="button">Betal med Vipps</button>
+</div></div>
+
+<div id="skannar" hidden>
+  <video id="video" muted playsinline></video>
+  <div class="sk-topp"><p class="caps">Skann vare</p><h2>Hald koden inne i ramma</h2></div>
+  <div id="ram"></div>
+  <div id="kamfeil" hidden><h3>Kameraet er ikkje tilgjengeleg her</h3><p>Opne sida direkte i nettlesaren, eller bruk testvarene for å prøve.</p></div>
+  <div class="sk-botn"><div class="rad"><button class="btn" id="opneTest2" type="button">Testvarer</button><button class="btn solid" id="ferdig" type="button">Ferdig</button></div></div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="vipps">
+  <div class="dl">
+    <span class="testmerke">TESTMODUS</span>
+    <h3>Her opnar Vipps-appen</h3>
+    <p>I den ferdige løysinga blir du send til Vipps for å godkjenne beløpet. No blir ingen pengar trekte.</p>
+    <div class="rad"><button class="btn solid" id="godkjenn" type="button">Simuler godkjent betaling</button><button class="btn" id="avbryt" type="button">Avbryt</button></div>
+  </div>
+</dialog>
+
+<dialog id="testvarer">
+  <div class="dl">
+    <span class="testmerke">TESTMODUS</span>
+    <h3>Simuler skanning</h3>
+    <p>Trykk på ei vare for å late som du skannar etiketten.</p>
+    <ul id="testliste"></ul>
+    <button class="btn" id="lukkTest" type="button">Lukk</button>
+  </div>
+</dialog>
+
+<script>__QR__</script>
+<script>__JSQR__</script>
+<script>__APP__</script>
+</body>
+</html>
