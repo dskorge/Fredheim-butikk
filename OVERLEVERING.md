@@ -87,6 +87,9 @@ Skriv ut `#etikettar` på A4 og test med fleire telefonar (iPhone og Android).
 **Funksjon**
 - [ ] Vanleg kamera-app opnar butikken og legg vara i korga
 - [ ] Skannaren i sida les kodar på 20–40 cm avstand, også i dårleg lys (simulert 18.11: 10–35 cm for kjøt, 10–40 cm for mjølk; ekte telefonar står att)
+- [ ] Lys: slår seg på av seg sjølv etter ca. 1,5 s i mørker (Android Chrome, iPhone iOS 17+), lysknappen slår av/på, og lyset slår seg ikkje på att etter at kunden har slått det av (testa med simulert kamera 18.11)
+- [ ] Telefon utan lysstøtte: tipset «For mørkt?» kjem fram
+- [ ] Lys og blank vakuumpose: gjenskin hindrar ikkje lesing (matt etikett)
 - [ ] Same vektpakke to gonger → «ligg alt i korga … skann kvar av dei» (testa i nettlesar 18.11)
 - [ ] Kjøtkasse: + og same kode to gonger gir 2 stk; kjøtdeig: + opnar kameraet (testa i nettlesar 18.11)
 - [ ] Betalt pakke skanna på nytt → «alt seld»

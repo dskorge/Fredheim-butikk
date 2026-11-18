@@ -222,10 +222,44 @@
   // Les kodar på 20–40 cm: be om HD-video, les eit utsnitt rundt ramma i full oppløysing
   // (og annankvar gong heile biletet nedskalert). Brukar BarcodeDetector der nettlesaren har det.
   var straum = null, loop = null, sist = {}, rundar = 0, detektor = null;
+  // Lys: Android (Chrome) og iPhone (iOS 17+) kan slå på lommelykta via kamerasporet.
+  // Sida slår lyset på av seg sjølv når biletet er mørkt ei stund, og kunden kan slå det av og på.
+  var spor = null, harLys = false, lysPa = false, lysManuelt = false, morkeTeljar = 0;
+  var lysC = document.createElement('canvas'), lysX = lysC.getContext('2d', { willReadFrequently: true });
+  lysC.width = 48; lysC.height = 36;
+  function settLys(pa) {
+    if (!spor) return;
+    spor.applyConstraints({ advanced: [{ torch: pa }] }).then(function () {
+      lysPa = pa;
+      var b = $('#lys'); b.className = pa ? 'pa' : ''; b.setAttribute('aria-pressed', pa ? 'true' : 'false');
+      b.setAttribute('aria-label', pa ? 'Slå av lys' : 'Slå på lys');
+    }).catch(function () { harLys = false; $('#lys').hidden = true; });
+  }
+  function kanLys(t) {
+    try { return typeof t.getCapabilities === 'function' && !!t.getCapabilities().torch; } catch (e) { return false; }
+  }
+  // Snittlysstyrke 0–255 frå eit lite miniatyrbilete
+  function lysstyrke(v) {
+    lysX.drawImage(v, 0, 0, 48, 36);
+    var d = lysX.getImageData(0, 0, 48, 36).data, sum = 0;
+    for (var i = 0; i < d.length; i += 4) sum += d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11;
+    return sum / (d.length / 4);
+  }
+  // Mørkt bilete i ca. 1,5 s utan treff: slå på lys, eller gi eit tips
+  function sjekkMorke(v) {
+    var mork = lysstyrke(v) < 70;
+    morkeTeljar = mork ? morkeTeljar + 1 : 0;
+    if (morkeTeljar === 8) {
+      if (harLys && !lysPa && !lysManuelt) settLys(true);
+      else if (!harLys) { var m = $('#morkt'); m.textContent = 'For mørkt? Slå på taklyset eller hald nærare.'; m.hidden = false; }
+    }
+    if (!mork) $('#morkt').hidden = true;
+  }
+  $('#lys').addEventListener('click', function () { lysManuelt = true; settLys(!lysPa); });
   function treff(data) {
     var now = Date.now();
     if (sist[data] && now - sist[data] < 2500) return;
-    sist[data] = now;
+    sist[data] = now; morkeTeljar = 0; $('#morkt').hidden = true;
     var ok = leggTil(data);
     var ram = $('#ram'); ram.className = ok ? 'ok' : 'nei'; setTimeout(function () { ram.className = ''; }, 600);
   }
@@ -241,15 +275,18 @@
   }
   function opneSkannar() {
     $('#skannar').hidden = false; document.body.classList.add('skannar');
-    $('#kamfeil').hidden = true;
+    $('#kamfeil').hidden = true; $('#lys').hidden = true; $('#morkt').hidden = true;
+    lysPa = false; lysManuelt = false; morkeTeljar = 0;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return kamFeil();
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }).then(function (s) {
-      straum = s; var v = $('#video'); v.srcObject = s; v.setAttribute('playsinline', ''); v.play();
+      straum = s; spor = s.getVideoTracks()[0]; harLys = kanLys(spor); $('#lys').hidden = !harLys;
+      var v = $('#video'); v.srcObject = s; v.setAttribute('playsinline', ''); v.play();
       try { if ('BarcodeDetector' in window) detektor = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detektor = null; }
       var c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true }), opptatt = false;
       loop = setInterval(function () {
         if (v.readyState < 2 || ventarPaPant || opptatt) return;
         rundar++;
+        sjekkMorke(v);
         if (detektor) {
           opptatt = true;
           detektor.detect(v).then(function (r) { opptatt = false; if (r && r.length) treff(r[0].rawValue); })
@@ -273,6 +310,7 @@
   function lukkSkannar() {
     clearInterval(loop); loop = null;
     if (straum) { straum.getTracks().forEach(function (t) { t.stop(); }); straum = null; }
+    spor = null; lysPa = false;
     $('#skannar').hidden = true; document.body.classList.remove('skannar');
   }
 

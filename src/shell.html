@@ -93,6 +93,12 @@ main{padding:0 var(--g)}
 .sk-botn .btn{border-color:var(--paper);color:var(--paper)}
 .sk-botn .btn.solid{background:var(--paper);color:var(--ink)}
 .sk-botn .rad{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#lys{position:absolute;z-index:3;right:var(--g);top:calc(18px + env(safe-area-inset-top));width:56px;height:56px;border-radius:50%;border:2px solid var(--paper);background:rgba(18,13,9,.55);color:var(--paper);display:grid;place-items:center;padding:0}
+#lys[hidden]{display:none}
+#lys svg{width:26px;height:26px}
+#lys.pa{background:var(--paper);color:var(--ink)}
+#morkt{position:absolute;z-index:2;left:50%;top:calc(44% + min(33vw,140px) + 18px);transform:translateX(-50%);background:rgba(18,13,9,.75);color:var(--paper);padding:8px 14px;font-size:.92rem;white-space:nowrap}
+#morkt[hidden]{display:none}
 #kamfeil{position:relative;z-index:2;margin:20vh var(--g) 0;background:var(--lift);padding:20px;color:var(--ink)}
 #kamfeil h3{font-size:1.3rem;margin-bottom:6px}
 
@@ -220,6 +226,8 @@ body.skannar{overflow:hidden}
   <video id="video" muted playsinline></video>
   <div class="sk-topp"><p class="caps">Skann vare</p><h2>Hald koden inne i ramma</h2></div>
   <div id="ram"></div>
+  <button id="lys" type="button" hidden aria-label="Slå på lys" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 2h10l-2 6H9z"/><path d="M9 8v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V8"/><path d="M12 13v3"/></svg></button>
+  <p id="morkt" hidden></p>
   <div id="kamfeil" hidden><h3>Kameraet er ikkje tilgjengeleg her</h3><p>Opne sida direkte i nettlesaren, eller bruk testvarene for å prøve.</p></div>
   <div class="sk-botn"><div class="rad"><button class="btn" id="opneTest2" type="button">Testvarer</button><button class="btn solid" id="ferdig" type="button">Ferdig</button></div></div>
 </div>
