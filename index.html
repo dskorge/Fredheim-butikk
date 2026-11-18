@@ -260,7 +260,7 @@ body.skannar{overflow:hidden}
 
   // ---------- Prisar (frå gardsbutikk-analysen og kjøtkasse-sida) ----------
   var MVA = 15;   // matvarer
-  var PANT = 20;  // glasflaske, ført som gjeld til kunden (ikkje inntekt, utan mva)
+  var FLASKE = 20; // glasflaske: kjøpt éin gong, deretter byte tom mot full (ikkje pant, ingen kontantar tilbake, 15 % mva)
   var PROD = {
     deig:      { namn: 'Kjøtdeig',       kg: 219,  vekt: true,  tekst: 'Storfe frå garden, laus vekt' },
     familie:   { namn: 'Familiekasse',   pris: 2890, tekst: 'ca. 10 kg, blanda stykningsdelar' },
@@ -322,8 +322,7 @@ body.skannar{overflow:hidden}
   function $(s) { return document.querySelector(s); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function sum() { return korg.reduce(function (t, l) { return t + l.kr * (l.n || 1); }, 0); }
-  function mvaGrunnlag() { return korg.reduce(function (t, l) { return l.pantLinje ? t : t + l.kr * (l.n || 1); }, 0); }
-  function mva() { return Math.round(mvaGrunnlag() * MVA / (100 + MVA)); }
+    function mva() { return Math.round(sum() * MVA / (100 + MVA)); }
   function antal() { return korg.reduce(function (t, l) { return l.pantLinje ? t : t + (l.n || 1); }, 0); }
   function varer(n) { return n + (n === 1 ? ' vare' : ' varer'); }
 
@@ -340,7 +339,7 @@ body.skannar{overflow:hidden}
   }
   function pantLinje(delta) {
     var l = korg.find(function (x) { return x.pantLinje; });
-    if (!l && delta > 0) korg.push({ pantLinje: true, namn: 'Pant glasflaske', kr: PANT, n: delta });
+    if (!l && delta > 0) korg.push({ pantLinje: true, namn: 'Glasflaske', kr: FLASKE, n: delta });
     else if (l) { l.n += delta; if (l.n <= 0) korg.splice(korg.indexOf(l), 1); }
   }
   var ventarPaPant = false;
@@ -371,7 +370,7 @@ body.skannar{overflow:hidden}
     auk(function (x) { return x.hylle && x.pid === 'mjolk'; }, { hylle: true, pid: 'mjolk', namn: p.namn, kr: p.pris, n: 1 });
     if (medPant) pantLinje(1);
     $('#pantDlg').close(); ventarPaPant = false;
-    lagtTil(p.namn + (medPant ? ' + pant' : ', byteflaske'));
+    lagtTil(p.namn + (medPant ? ' + ny flaske' : ', byte flaske'));
   }
 
   // ---------- Visning ----------
@@ -382,7 +381,7 @@ body.skannar{overflow:hidden}
   }
 
   function linjeMeta(l) {
-    if (l.pantLinje) return kr(l.kr) + ' per flaske · utan mva, du får han att';
+    if (l.pantLinje) return kr(l.kr) + ' per flaske · neste gong byter du tom mot full';
     if (l.hylle) return kr(l.kr) + ' per stk';
     if (l.vekt) return vekt(l.g) + ' · ' + kr(l.kg) + '/kg';
     return esc(l.tekst || '');
@@ -400,8 +399,7 @@ body.skannar{overflow:hidden}
     }).join('');
     var s = sum();
     $('#sum').textContent = kr(s);
-    var harPant = korg.some(function (l) { return l.pantLinje; });
-    $('#mva').textContent = 'Herav mva. ' + MVA + ' %: ' + kr(mva()) + (harPant ? ' · pant er utan mva' : '');
+    $('#mva').textContent = 'Herav mva. ' + MVA + ' %: ' + kr(mva());
     $('#betal').textContent = 'Betal ' + kr(s) + ' med Vipps';
     $('#tal').textContent = varer(antal());
   }
@@ -440,7 +438,7 @@ body.skannar{overflow:hidden}
     korg.forEach(function (l) { if (l.id) seld.push(l.id); });
     $('#ordre').textContent = 'Ordre ' + nr + ' · ' + new Date().toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' });
     $('#kvlinjer').innerHTML = korg.map(function (l) {
-      var under = l.pantLinje ? '<small>Utan mva · blir betalt tilbake når du leverer flaska</small>'
+      var under = l.pantLinje ? '<small>Ta med flaska neste gong og byt ho mot ei full</small>'
         : l.vekt ? '<small>' + vekt(l.g) + ' · parti ' + esc(l.parti) + '</small>'
         : l.id ? '<small>Parti ' + esc(l.parti) + '</small>' : '';
       return '<tr><td>' + esc(l.namn) + ((l.hylle || l.pantLinje) ? ' × ' + l.n : '') + under + '</td><td>' + kr(l.kr * (l.n || 1)) + '</td></tr>';
@@ -500,7 +498,7 @@ body.skannar{overflow:hidden}
     }).join('');
     html += HYLLE.map(function (pid) {
       var p = PROD[pid];
-      var info = p.pant ? 'Ny flaske: + ' + kr(PANT) + ' pant. Har du med tom flaske, byter du utan pant.' : 'Skann éin gong per vare du tek';
+      var info = p.pant ? 'Har du med tom flaske, byter du. Ny flaske: + ' + kr(FLASKE) + '.' : 'Skann éin gong per vare du tek';
       return '<article class="etikett hylle"><div class="et-topp">' + logo + '<span class="caps">Hyllekode</span></div>' +
         '<h3>' + esc(p.namn) + '</h3><p class="et-tekst">' + esc(p.tekst) + '</p>' +
         '<div class="et-midt"><div><p class="et-pris">' + kr(p.pris) + '</p><p>' + info + '</p></div>' +
@@ -526,8 +524,8 @@ body.skannar{overflow:hidden}
   }
   window.addEventListener('hashchange', ruting);
 
-  $('#pantTekst').textContent = 'Ny flaske kostar ' + kr(PANT) + ' i pant. Du får panten att når du leverer flaska tilbake.';
-  $('#medPant').textContent = 'Ny flaske, + ' + kr(PANT) + ' pant';
+  $('#pantTekst').textContent = 'Set att den tomme flaska og ta ei full. Utan flaske kjøper du ei ny for ' + kr(FLASKE) + ', som du byter inn neste gong.';
+  $('#medPant').textContent = 'Nei, kjøp flaske (+ ' + kr(FLASKE) + ')';
   lagEtikettar();
   teikn();
   ruting();
